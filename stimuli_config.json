@@ -1,0 +1,228 @@
+{
+    "list_a": [
+        {
+            "target": "apple",
+            "audio": "assets/audio/apple.mp3",
+            "target_img": "assets/stims/apple.png",
+            "prime_category": "neutral",
+            "correct_response": "f"
+        },
+        {
+            "target": "volcano",
+            "audio": "assets/audio/volcano.mp3",
+            "target_img": "assets/stims/volcano.png",
+            "prime_category": "neutral",
+            "correct_response": "f"
+        },
+        {
+            "target": "knife",
+            "audio": "assets/audio/knife.mp3",
+            "target_img": "assets/stims/knife.png",
+            "prime_category": "neutral",
+            "correct_response": "f"
+        },
+        {
+            "target": "nose",
+            "audio": "assets/audio/nose.mp3",
+            "target_img": "assets/stims/nose.png",
+            "prime_category": "neutral",
+            "correct_response": "f"
+        },
+        {
+            "target": "table",
+            "audio": "assets/audio/table.mp3",
+            "target_img": "assets/stims/table.png",
+            "prime_category": "neutral",
+            "correct_response": "f"
+        },
+        {
+            "target": "screwdriver",
+            "audio": "assets/audio/screwdriver.mp3",
+            "target_img": "assets/stims/screwdriver.png",
+            "prime_category": "neutral",
+            "correct_response": "f"
+        },
+        {
+            "target": "nails",
+            "audio": "assets/audio/nails.mp3",
+            "target_img": "assets/stims/nails.png",
+            "prime_category": "neutral",
+            "correct_response": "f"
+        },
+        {
+            "target": "orange",
+            "audio": "assets/audio/orange.mp3",
+            "target_img": "assets/stims/orange.png",
+            "prime_category": "neutral",
+            "correct_response": "f"
+        },
+        {
+            "target": "bed",
+            "audio": "assets/audio/bed.mp3",
+            "target_img": "assets/stims/bed.png",
+            "prime_category": "neutral",
+            "correct_response": "f"
+        },
+        {
+            "target": "piano",
+            "audio": "assets/audio/piano.mp3",
+            "target_img": "assets/stims/piano.png",
+            "prime_category": "neutral",
+            "correct_response": "f"
+        },
+        {
+            "target": "grape",
+            "audio": "assets/audio/grape.mp3",
+            "target_img": "assets/stims/grape.png",
+            "prime_category": "neutral",
+            "correct_response": "f"
+        },
+        {
+            "target": "chair",
+            "audio": "assets/audio/chair.mp3",
+            "target_img": "assets/stims/chair.png",
+            "prime_category": "neutral",
+            "correct_response": "f"
+        },
+        {
+            "target": "banana",
+            "audio": "assets/audio/banana.mp3",
+            "target_img": "assets/stims/banana.png",
+            "prime_category": "neutral",
+            "correct_response": "f"
+        },
+        {
+            "target": "mouth",
+            "audio": "assets/audio/mouth.mp3",
+            "target_img": "assets/stims/mouth.png",
+            "prime_category": "neutral",
+            "correct_response": "f"
+        },
+        {
+            "target": "lion",
+            "audio": "assets/audio/lion.mp3",
+            "target_img": "assets/stims/lion.png",
+            "prime_category": "neutral",
+            "correct_response": "f"
+        },
+        {
+            "target": "hammer",
+            "audio": "assets/audio/hammer.mp3",
+            "target_img": "assets/stims/hammer.png",
+            "prime_category": "neutral",
+            "correct_response": "f"
+        },
+        {
+            "target": "dog",
+            "audio": "assets/audio/dog.mp3",
+            "target_img": "assets/stims/dog.png",
+            "prime_category": "disgust",
+            "correct_response": "f"
+        },
+        {
+            "target": "horse",
+            "audio": "assets/audio/horse.mp3",
+            "target_img": "assets/stims/horse.png",
+            "prime_category": "disgust",
+            "correct_response": "f"
+        },
+        {
+            "target": "flute",
+            "audio": "assets/audio/flute.mp3",
+            "target_img": "assets/stims/flute.png",
+            "prime_category": "disgust",
+            "correct_response": "f"
+        },
+        {
+            "target": "guitar",
+            "audio": "assets/audio/guitar.mp3",
+            "target_img": "assets/stims/guitar.png",
+            "prime_category": "disgust",
+            "correct_response": "f"
+        },
+        {
+            "target": "saw",
+            "audio": "assets/audio/saw.mp3",
+            "target_img": "assets/stims/saw.png",
+            "prime_category": "fear",
+            "correct_response": "f"
+        },
+        {
+            "target": "sword",
+            "audio": "assets/audio/sword.mp3",
+            "target_img": "assets/stims/sword.png",
+            "prime_category": "fear",
+            "correct_response": "f"
+        },
+        {
+            "target": "cannon",
+            "audio": "assets/audio/cannon.mp3",
+            "target_img": "assets/stims/cannon.png",
+            "prime_category": "fear",
+            "correct_response": "f"
+        },
+        {
+            "target": "ear",
+            "audio": "assets/audio/ear.mp3",
+            "target_img": "assets/stims/ear.png",
+            "prime_category": "fear",
+            "correct_response": "f"
+        },
+        {
+            "target": "cow",
+            "audio": "assets/audio/cow.mp3",
+            "target_img": "assets/stims/cow.png",
+            "prime_category": "happy",
+            "correct_response": "f"
+        },
+        {
+            "target": "couch",
+            "audio": "assets/audio/couch.mp3",
+            "target_img": "assets/stims/couch.png",
+            "prime_category": "happy",
+            "correct_response": "f"
+        },
+        {
+            "target": "hand",
+            "audio": "assets/audio/hand.mp3",
+            "target_img": "assets/stims/hand.png",
+            "prime_category": "happy",
+            "correct_response": "f"
+        },
+        {
+            "target": "mountain",
+            "audio": "assets/audio/mountain.mp3",
+            "target_img": "assets/stims/mountain.png",
+            "prime_category": "happy",
+            "correct_response": "f"
+        },
+        {
+            "target": "ocean",
+            "audio": "assets/audio/ocean.mp3",
+            "target_img": "assets/stims/ocean.png",
+            "prime_category": "sad",
+            "correct_response": "f"
+        },
+        {
+            "target": "gun",
+            "audio": "assets/audio/gun.mp3",
+            "target_img": "assets/stims/gun.png",
+            "prime_category": "sad",
+            "correct_response": "f"
+        },
+        {
+            "target": "river",
+            "audio": "assets/audio/river.mp3",
+            "target_img": "assets/stims/river.png",
+            "prime_category": "sad",
+            "correct_response": "f"
+        },
+        {
+            "target": "drums",
+            "audio": "assets/audio/drums.mp3",
+            "target_img": "assets/stims/drums.png",
+            "prime_category": "sad",
+            "correct_response": "f"
+        }
+    ]
+}
