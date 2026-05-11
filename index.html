@@ -4,30 +4,22 @@
     <title>Mandarin Statistical Learning Task</title>
     <script src="https://unpkg.com/jspsych@7.3.4"></script>
     <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.3"></script>
-    <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.2.0"></script> <script src="https://unpkg.com/@jspsych/plugin-image-keyboard-response@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.2.0"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-image-keyboard-response@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-audio-keyboard-response@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-preload@1.1.3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" type="text/css" />
     
     <style>
-        /* Ensures the whole experiment stays centered */
-        .jspsych-content { max-width: 900px; }
-        
-        /* FIX: Scaling the Primes so they don't overflow */
-        .prime-img { 
-            max-height: 70vh; /* Limits height to 70% of the viewport */
-            width: auto;      /* Maintains aspect ratio */
-            border: 5px solid #eee;
-            border-radius: 10px;
-        }
-
-        /* Test stim container */
+        .jspsych-content { max-width: 1000px; }
+        .prime-img { max-height: 60vh; width: auto; border: 5px solid #eee; border-radius: 10px; }
         .stim-container { display: flex; justify-content: space-around; align-items: center; width: 100%; margin: 20px 0; }
-        .stim-image { width: 300px; height: auto; border: 2px solid #ccc; border-radius: 8px; }
-        .fixation { font-size: 60px; font-weight: bold; color: #333; }
-        
-        /* Instructions styling */
-        .instructions-box { text-align: left; line-height: 1.6; }
+        .stim-image { width: 280px; height: auto; border: 2px solid #ccc; border-radius: 8px; }
+        .fixation { font-size: 60px; font-weight: bold; }
+        #results-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin-top: 20px; }
+        .chart-box { width: 450px; height: 300px; background: #f9f9f9; padding: 10px; border-radius: 10px; }
     </style>
 </head>
 <body></body>
@@ -52,25 +44,17 @@
     ];
 
     const emotions = ['disgust', 'fear', 'happy', 'sad'];
+    const jsPsych = initJsPsych();
 
-    const jsPsych = initJsPsych({
-        on_finish: function() {
-            jsPsych.data.displayData();
-        }
-    });
-
-    /** 1. LOGIC FOR TRIALS **/
+    /** 1. MAPPING & TRIAL GENERATION **/
     function getConditionMapping() {
         let shuffled = jsPsych.randomization.shuffle(allItems.map(i => i.name));
         let mapping = {};
         shuffled.slice(0, 16).forEach(name => mapping[name] = 'neutral');
         let emoGroup = shuffled.slice(16);
-        emoGroup.forEach((name, index) => {
-            mapping[name] = emotions[Math.floor(index / 4)];
-        });
+        emoGroup.forEach((name, index) => { mapping[name] = emotions[Math.floor(index / 4)]; });
         return mapping;
     }
-
     const currentMapping = getConditionMapping();
 
     function generateTrialVariables() {
@@ -78,7 +62,6 @@
             const possibleFoils = allItems.filter(f => f.cat !== item.cat);
             const foil = jsPsych.randomization.sampleWithoutReplacement(possibleFoils, 1)[0];
             const targetIsLeft = Math.random() < 0.5;
-
             return {
                 target_name: item.name,
                 audio_path: `assets/audio/${item.name}.mp3`,
@@ -90,7 +73,7 @@
         });
     }
 
-    /** 2. PRELOAD ASSETS **/
+    /** 2. PRELOAD **/
     const all_images = [];
     ['neutral', ...emotions].forEach(e => { for(let i=1; i<=12; i++) all_images.push(`assets/primes/${e}/${e}_${i}.jpg`); });
     allItems.forEach(i => all_images.push(`assets/stims/${i.cat}/${i.cat}_${i.name}.png`));
@@ -98,31 +81,16 @@
     const preload = {
         type: jsPsychPreload,
         images: all_images,
-        audio: allItems.map(i => `assets/audio/${i.name}.mp3`),
-        message: "Loading study assets...",
-        continue_after_error: true
+        audio: allItems.map(i => `assets/audio/${i.name}.mp3`)
     };
 
-    /** 3. INSTRUCTIONS (Unlocks Audio) **/
+    /** 3. BLOCKS **/
     const instructions = {
         type: jsPsychHtmlButtonResponse,
-        stimulus: `
-            <div class="instructions-box">
-                <h2>Welcome to the Study</h2>
-                <p>In this task, you will hear Mandarin words while seeing two images on the screen.</p>
-                <p><strong>Your Goal:</strong> Select the image that corresponds to the word you hear.</p>
-                <ul>
-                    <li>Press <strong>F</strong> for the Left image.</li>
-                    <li>Press <strong>J</strong> for the Right image.</li>
-                </ul>
-                <p>Before each word, a brief image will appear. Please stay focused on the screen.</p>
-                <p>Ensure your volume is turned up before clicking the button below.</p>
-            </div>`,
-        choices: ['Begin Experiment'],
-        post_trial_gap: 1000
+        stimulus: `<h2>Instructions</h2><p>Select the image (F or J) that matches the Mandarin word you hear.</p>`,
+        choices: ['Start Experiment']
     };
 
-    /** 4. EXPERIMENTAL BLOCKS **/
     const fixation = {
         type: jsPsychHtmlKeyboardResponse,
         stimulus: '<div class="fixation">+</div>',
@@ -131,34 +99,11 @@
     };
 
     const prime_trial = {
-        type: jsPsychImageKeyboardResponse,
-        stimulus: function() {
-            const cat = jsPsych.timelineVariable('prime_cat');
-            const randIdx = Math.floor(Math.random() * 12) + 1;
-            return `assets/primes/${cat}/${cat}_${randIdx}.jpg`;
-        },
-        choices: "NO_KEYS",
-        trial_duration: 500,
-        // Added stim_class to apply our resizing CSS
-        stimulus_height: null, 
-        stimulus_width: null,
-        prompt: '<div style="height:20px;"></div>', // spacing
-        on_start: function(trial) {
-            // This applies a CSS class to the image rendered by the plugin
-            trial.stimulus = `<img src="${trial.stimulus}" class="prime-img">`;
-            // Because we changed the stimulus to HTML, we must switch to html plugin logic
-            // or just use the stimulus parameters. Let's use CSS for the img tag globally.
-        }
-    };
-    
-    // Simplest way to fix image size: override the stimulus to use an img tag with our class
-    const prime_trial_fixed = {
         type: jsPsychHtmlKeyboardResponse,
         stimulus: function() {
             const cat = jsPsych.timelineVariable('prime_cat');
             const randIdx = Math.floor(Math.random() * 12) + 1;
-            const path = `assets/primes/${cat}/${cat}_${randIdx}.jpg`;
-            return `<img src="${path}" class="prime-img">`;
+            return `<img src="assets/primes/${cat}/${cat}_${randIdx}.jpg" class="prime-img">`;
         },
         choices: "NO_KEYS",
         trial_duration: 500
@@ -169,28 +114,96 @@
         stimulus: jsPsych.timelineVariable('audio_path'),
         choices: ['f', 'j'],
         prompt: function() {
-            return `
-                <div class="stim-container">
-                    <img src="${jsPsych.timelineVariable('left_img')}" class="stim-image">
-                    <img src="${jsPsych.timelineVariable('right_img')}" class="stim-image">
-                </div>
-                <p>Select the correct image (<strong>F</strong> or <strong>J</strong>)</p>`;
+            return `<div class="stim-container">
+                        <img src="${jsPsych.timelineVariable('left_img')}" class="stim-image">
+                        <img src="${jsPsych.timelineVariable('right_img')}" class="stim-image">
+                    </div>`;
         },
         trial_duration: 4000,
-        response_ends_trial: true,
+        data: function() {
+            return {
+                phase: 'test',
+                target: jsPsych.timelineVariable('target_name'),
+                condition: jsPsych.timelineVariable('prime_cat'),
+                correct_response: jsPsych.timelineVariable('correct_key')
+            };
+        },
         on_finish: function(data) {
-            data.correct = jsPsych.pluginAPI.compareKeys(data.response, jsPsych.timelineVariable('correct_key'));
+            data.correct = jsPsych.pluginAPI.compareKeys(data.response, data.correct_response);
         }
     };
 
     const main_procedure = {
-        timeline: [fixation, prime_trial_fixed, test_trial],
+        timeline: [fixation, prime_trial, test_trial],
         timeline_variables: generateTrialVariables(),
         randomize_order: true,
         repetitions: 4
     };
 
-    // Timeline starts with Preload, then Instructions (interaction), then Main Task
-    jsPsych.run([preload, instructions, main_procedure]);
+    /** 4. DATA VISUALIZATION BLOCK **/
+    const debrief_results = {
+        type: jsPsychHtmlButtonResponse,
+        choices: ['Finish and Export Data'],
+        stimulus: function() {
+            const testData = jsPsych.data.get().filter({phase: 'test'}).values();
+            
+            // Logic to calculate Block Number (Repetitions)
+            // Since we have 32 items, every 32 trials is a new block.
+            testData.forEach((d, i) => { d.block = Math.floor(i / 32) + 1; });
+
+            return `
+                <h3>Experiment Complete!</h3>
+                <p>Below is your learning progress across the 4 blocks of the task.</p>
+                <div id="results-container">
+                    <div class="chart-box"><canvas id="accChart"></canvas></div>
+                    <div class="chart-box"><canvas id="rtChart"></canvas></div>
+                </div>
+            `;
+        },
+        on_load: function() {
+            const testData = jsPsych.data.get().filter({phase: 'test'});
+            const blocks = [1, 2, 3, 4];
+            
+            // Helper to get mean by block and category
+            const getStats = (metric) => {
+                return blocks.map(b => {
+                    const blockData = testData.filter({block: b});
+                    return blockData.select(metric).mean();
+                });
+            };
+
+            // Accuracy Chart
+            new Chart(document.getElementById('accChart'), {
+                type: 'line',
+                data: {
+                    labels: ['Block 1', 'Block 2', 'Block 3', 'Block 4'],
+                    datasets: [{
+                        label: 'Overall Accuracy (%)',
+                        data: getStats('correct').map(v => v * 100),
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                    }]
+                },
+                options: { plugins: { title: { display: true, text: 'Learning Accuracy' } } }
+            });
+
+            // Reaction Time Chart
+            new Chart(document.getElementById('rtChart'), {
+                type: 'line',
+                data: {
+                    labels: ['Block 1', 'Block 2', 'Block 3', 'Block 4'],
+                    datasets: [{
+                        label: 'Mean RT (ms)',
+                        data: getStats('rt'),
+                        borderColor: 'rgb(255, 99, 132)',
+                        tension: 0.1
+                    }]
+                },
+                options: { plugins: { title: { display: true, text: 'Response Speed (RT)' } } }
+            });
+        }
+    };
+
+    jsPsych.run([preload, instructions, main_procedure, debrief_results]);
 </script>
 </html>
