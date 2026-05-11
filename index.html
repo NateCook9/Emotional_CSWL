@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Mandarin Statistical Learning Task</title>
+    <!-- Dependencies -->
     <script src="https://unpkg.com/jspsych@7.3.4"></script>
     <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.2.0"></script>
@@ -13,13 +14,30 @@
     <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" type="text/css" />
     
     <style>
+        body { background-color: #f4f7f6; font-family: 'Helvetica Neue', Arial, sans-serif; }
         .jspsych-content { max-width: 1000px; }
-        .prime-img { max-height: 60vh; width: auto; border: 5px solid #eee; border-radius: 10px; }
-        .stim-container { display: flex; justify-content: space-around; align-items: center; width: 100%; margin: 20px 0; }
-        .stim-image { width: 280px; height: auto; border: 2px solid #ccc; border-radius: 8px; }
-        .fixation { font-size: 60px; font-weight: bold; }
-        #results-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin-top: 20px; }
-        .chart-box { width: 450px; height: 300px; background: #f9f9f9; padding: 10px; border-radius: 10px; }
+        .prime-img { max-height: 60vh; width: auto; border: 5px solid #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .stim-container { display: flex; justify-content: space-around; align-items: center; width: 100%; margin: 30px 0; }
+        .stim-image { width: 280px; height: auto; border: 3px solid #fff; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); transition: transform 0.2s; }
+        .fixation { font-size: 72px; font-weight: 300; color: #555; }
+        
+        /* Dashboard Styling */
+        #results-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 25px; margin: 30px 0; }
+        .chart-box { width: 460px; height: 320px; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .button-group { display: flex; justify-content: center; gap: 15px; margin-top: 20px; }
+        
+        .download-btn {
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        .download-btn:hover { background-color: #357abd; }
     </style>
 </head>
 <body></body>
@@ -87,8 +105,20 @@
     /** 3. BLOCKS **/
     const instructions = {
         type: jsPsychHtmlButtonResponse,
-        stimulus: `<h2>Instructions</h2><p>Select the image (F or J) that matches the Mandarin word you hear.</p>`,
-        choices: ['Start Experiment']
+        stimulus: `
+            <div style="text-align: left; max-width: 700px; margin: auto;">
+                <h2>Study Instructions</h2>
+                <p>Welcome! You are about to participate in a statistical learning task. Here is how it works:</p>
+                <ul>
+                    <li>You will see a <strong>fixation cross (+)</strong>. Please focus on it.</li>
+                    <li>An image will flash briefly.</li>
+                    <li>You will hear a <strong>Mandarin word</strong> and see two photos.</li>
+                    <li>Press <strong>'F'</strong> if the word matches the <strong>left</strong> photo.</li>
+                    <li>Press <strong>'J'</strong> if the word matches the <strong>right</strong> photo.</li>
+                </ul>
+                <p>There are 4 rounds (blocks) in total. Please try to be as accurate and as fast as possible.</p>
+            </div>`,
+        choices: ['Begin Task']
     };
 
     const fixation = {
@@ -117,7 +147,8 @@
             return `<div class="stim-container">
                         <img src="${jsPsych.timelineVariable('left_img')}" class="stim-image">
                         <img src="${jsPsych.timelineVariable('right_img')}" class="stim-image">
-                    </div>`;
+                    </div>
+                    <p style="color: #666;">Press <strong>F</strong> (Left) or <strong>J</strong> (Right)</p>`;
         },
         trial_duration: 4000,
         data: function() {
@@ -140,21 +171,28 @@
         repetitions: 4
     };
 
-/** 4. DATA VISUALIZATION BLOCK (SPLIT BY CONDITION) **/
+    /** 4. DATA VISUALIZATION & DOWNLOAD BLOCK **/
     const debrief_results = {
         type: jsPsychHtmlButtonResponse,
-        choices: ['Finish and Export Data'],
+        choices: ['Exit Experiment'],
         stimulus: function() {
             const testData = jsPsych.data.get().filter({phase: 'test'}).values();
-            // Assign block numbers based on trial sequence (32 trials per block)
             testData.forEach((d, i) => { d.block = Math.floor(i / 32) + 1; });
 
             return `
-                <h3>Learning Progress by Emotion</h3>
-                <p>Comparing the statistical learning slope across emotional categories.</p>
-                <div id="results-container">
-                    <div class="chart-box"><canvas id="accChart"></canvas></div>
-                    <div class="chart-box"><canvas id="rtChart"></canvas></div>
+                <div style="padding: 20px;">
+                    <h2 style="color: #333;">Experiment Summary</h2>
+                    <p style="color: #666;">View your progress across the four learning blocks below.</p>
+                    
+                    <div id="results-container">
+                        <div class="chart-box"><canvas id="accChart"></canvas></div>
+                        <div class="chart-box"><canvas id="rtChart"></canvas></div>
+                    </div>
+
+                    <div class="button-group">
+                        <button id="download-json" class="download-btn">Download Raw Data (JSON)</button>
+                    </div>
+                    <p style="margin-top: 30px; font-size: 13px; color: #999;">Click the button above to save your session data locally before exiting.</p>
                 </div>
             `;
         },
@@ -163,58 +201,76 @@
             const blocks = [1, 2, 3, 4];
             const activeConditions = ['neutral', 'disgust', 'fear', 'happy', 'sad'];
             
-            // Define specific colors for your emotional categories
             const colors = {
-                neutral: 'rgba(128, 128, 128, 1)', // Gray
-                disgust: 'rgba(46, 139, 87, 1)',   // Sea Green
-                fear: 'rgba(148, 0, 211, 1)',      // Dark Violet
-                happy: 'rgba(255, 165, 0, 1)',     // Orange
-                sad: 'rgba(70, 130, 180, 1)'       // Steel Blue
+                neutral: 'rgba(128, 128, 128, 1)', 
+                disgust: 'rgba(46, 139, 87, 1)',   
+                fear: 'rgba(148, 0, 211, 1)',      
+                happy: 'rgba(255, 165, 0, 1)',     
+                sad: 'rgba(70, 130, 180, 1)'       
             };
 
-            // Function to generate dataset for each condition
             const createDatasets = (metric) => {
                 return activeConditions.map(cond => {
                     const dataPoints = blocks.map(b => {
                         const subset = testData.filter({block: b, condition: cond});
                         const val = subset.select(metric).mean();
-                        // For Accuracy, convert 0-1 to 0-100%
-                        return metric === 'correct' ? (val * 100).toFixed(1) : val.toFixed(0);
+                        return metric === 'correct' ? (val * 100).toFixed(1) : (val || 0).toFixed(0);
                     });
 
                     return {
                         label: cond.charAt(0).toUpperCase() + cond.slice(1),
                         data: dataPoints,
                         borderColor: colors[cond],
-                        backgroundColor: colors[cond].replace('1)', '0.2)'),
+                        backgroundColor: colors[cond].replace('1)', '0.1)'),
                         tension: 0.3,
-                        fill: false
+                        pointRadius: 4,
+                        borderWidth: 2
                     };
                 });
             };
 
-            // 1. Accuracy Chart
-            new Chart(document.getElementById('accChart'), {
-                type: 'line',
-                data: { labels: ['Block 1', 'Block 2', 'Block 3', 'Block 4'], datasets: createDatasets('correct') },
-                options: { 
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { title: { display: true, text: 'Accuracy % by Condition' } },
-                    scales: { y: { min: 0, max: 100, title: { display: true, text: 'Percent Correct' } } }
+            // Setup Charts
+            const chartOptions = (title, yTitle) => ({
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' }, title: { display: true, text: title, font: { size: 16 } } },
+                scales: { 
+                    y: { title: { display: true, text: yTitle }, beginAtZero: metric === 'correct' },
+                    x: { title: { display: true, text: 'Learning Block' } }
                 }
             });
 
-            // 2. Reaction Time Chart
+            new Chart(document.getElementById('accChart'), {
+                type: 'line',
+                data: { labels: ['B1', 'B2', 'B3', 'B4'], datasets: createDatasets('correct') },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { title: { display: true, text: 'Accuracy by Condition (%)' } },
+                    scales: { y: { min: 0, max: 100 } }
+                }
+            });
+
             new Chart(document.getElementById('rtChart'), {
                 type: 'line',
-                data: { labels: ['Block 1', 'Block 2', 'Block 3', 'Block 4'], datasets: createDatasets('rt') },
+                data: { labels: ['B1', 'B2', 'B3', 'B4'], datasets: createDatasets('rt') },
                 options: { 
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { title: { display: true, text: 'Mean RT (ms) by Condition' } },
-                    scales: { y: { title: { display: true, text: 'Milliseconds' } } }
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { title: { display: true, text: 'Reaction Time (ms)' } }
                 }
+            });
+
+            // ADDED: Download functionality
+            document.getElementById('download-json').addEventListener('click', function() {
+                const data = jsPsych.data.get().json();
+                const blob = new Blob([data], {type: 'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `cswl_data_${new Date().getTime()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
             });
         }
     };
