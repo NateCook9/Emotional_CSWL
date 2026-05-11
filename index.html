@@ -61,16 +61,19 @@
         { name: 'ocean', cat: 'earth' }, { name: 'volcano', cat: 'earth' }
     ];
 
-    const emotions = ['disgust', 'fear', 'happy', 'sad'];
+    const activeEmotions = ['neutral', 'disgust', 'fear', 'happy'];
     const jsPsych = initJsPsych();
 
-    /** 1. MAPPING & TRIAL GENERATION **/
+/** 1. EQUAL MAPPING LOGIC **/
     function getConditionMapping() {
         let shuffled = jsPsych.randomization.shuffle(allItems.map(i => i.name));
         let mapping = {};
-        shuffled.slice(0, 16).forEach(name => mapping[name] = 'neutral');
-        let emoGroup = shuffled.slice(16);
-        emoGroup.forEach((name, index) => { mapping[name] = emotions[Math.floor(index / 4)]; });
+        
+        // Divide 32 items into 4 groups of 8
+        activeEmotions.forEach((emo, index) => {
+            let group = shuffled.slice(index * 8, (index + 1) * 8);
+            group.forEach(name => mapping[name] = emo);
+        });
         return mapping;
     }
     const currentMapping = getConditionMapping();
@@ -171,110 +174,54 @@
         repetitions: 4
     };
 
-    /** 4. DATA VISUALIZATION & DOWNLOAD BLOCK **/
+/** 4. DASHBOARD **/
     const debrief_results = {
         type: jsPsychHtmlButtonResponse,
         choices: ['Exit Experiment'],
-        stimulus: function() {
+        stimulus: `<h3>Experiment Summary</h3><div id="results-container">
+                    <div class="chart-box"><canvas id="accChart"></canvas></div>
+                    <div class="chart-box"><canvas id="rtChart"></canvas></div>
+                   </div>
+                   <button id="download-json" class="download-btn">Download Raw Data (JSON)</button>`,
+        on_load: function() {
             const testData = jsPsych.data.get().filter({phase: 'test'}).values();
             testData.forEach((d, i) => { d.block = Math.floor(i / 32) + 1; });
-
-            return `
-                <div style="padding: 20px;">
-                    <h2 style="color: #333;">Experiment Summary</h2>
-                    <p style="color: #666;">View your progress across the four learning blocks below.</p>
-                    
-                    <div id="results-container">
-                        <div class="chart-box"><canvas id="accChart"></canvas></div>
-                        <div class="chart-box"><canvas id="rtChart"></canvas></div>
-                    </div>
-
-                    <div class="button-group">
-                        <button id="download-json" class="download-btn">Download Raw Data (JSON)</button>
-                    </div>
-                    <p style="margin-top: 30px; font-size: 13px; color: #999;">Click the button above to save your session data locally before exiting.</p>
-                </div>
-            `;
-        },
-        on_load: function() {
-            const testData = jsPsych.data.get().filter({phase: 'test'});
             const blocks = [1, 2, 3, 4];
-            const activeConditions = ['neutral', 'disgust', 'fear', 'happy', 'sad'];
-            
-            const colors = {
-                neutral: 'rgba(128, 128, 128, 1)', 
-                disgust: 'rgba(46, 139, 87, 1)',   
-                fear: 'rgba(148, 0, 211, 1)',      
-                happy: 'rgba(255, 165, 0, 1)',     
-                sad: 'rgba(70, 130, 180, 1)'       
-            };
+            const colors = { neutral: '#808080', disgust: '#2E8B57', fear: '#9400D3', happy: '#FFA500' };
 
             const createDatasets = (metric) => {
-                return activeConditions.map(cond => {
+                return activeEmotions.map(cond => {
                     const dataPoints = blocks.map(b => {
-                        const subset = testData.filter({block: b, condition: cond});
+                        const subset = jsPsych.data.get().filter({phase: 'test', block: b, condition: cond});
                         const val = subset.select(metric).mean();
                         return metric === 'correct' ? (val * 100).toFixed(1) : (val || 0).toFixed(0);
                     });
-
-                    return {
-                        label: cond.charAt(0).toUpperCase() + cond.slice(1),
-                        data: dataPoints,
-                        borderColor: colors[cond],
-                        backgroundColor: colors[cond].replace('1)', '0.1)'),
-                        tension: 0.3,
-                        pointRadius: 4,
-                        borderWidth: 2
-                    };
+                    return { label: cond.toUpperCase(), data: dataPoints, borderColor: colors[cond], tension: 0.3 };
                 });
             };
-
-            // Setup Charts
-            const chartOptions = (title, yTitle) => ({
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' }, title: { display: true, text: title, font: { size: 16 } } },
-                scales: { 
-                    y: { title: { display: true, text: yTitle }, beginAtZero: metric === 'correct' },
-                    x: { title: { display: true, text: 'Learning Block' } }
-                }
-            });
 
             new Chart(document.getElementById('accChart'), {
                 type: 'line',
                 data: { labels: ['B1', 'B2', 'B3', 'B4'], datasets: createDatasets('correct') },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    plugins: { title: { display: true, text: 'Accuracy by Condition (%)' } },
-                    scales: { y: { min: 0, max: 100 } }
-                }
+                options: { plugins: { title: { display: true, text: 'Accuracy %' } }, scales: { y: { min: 0, max: 100 } } }
             });
 
             new Chart(document.getElementById('rtChart'), {
                 type: 'line',
                 data: { labels: ['B1', 'B2', 'B3', 'B4'], datasets: createDatasets('rt') },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    plugins: { title: { display: true, text: 'Reaction Time (ms)' } }
-                }
+                options: { plugins: { title: { display: true, text: 'Reaction Time (ms)' } } }
             });
 
-            // ADDED: Download functionality
-            document.getElementById('download-json').addEventListener('click', function() {
-                const data = jsPsych.data.get().json();
-                const blob = new Blob([data], {type: 'application/json'});
-                const url = URL.createObjectURL(blob);
+            document.getElementById('download-json').addEventListener('click', () => {
+                const blob = new Blob([jsPsych.data.get().json()], {type: 'application/json'});
                 const a = document.createElement('a');
-                a.href = url;
-                a.download = `cswl_data_${new Date().getTime()}.json`;
+                a.href = URL.createObjectURL(blob);
+                a.download = `cswl_data.json`;
                 a.click();
-                URL.revokeObjectURL(url);
             });
         }
     };
-
+    
     jsPsych.run([preload, instructions, main_procedure, debrief_results]);
 </script>
 </html>
