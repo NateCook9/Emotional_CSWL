@@ -93,7 +93,19 @@
     /** 3. BLOCKS **/
     const instructions = {
         type: jsPsychHtmlButtonResponse,
-        stimulus: `<h2>Study Instructions</h2><p>Press <strong>F</strong> for the Left photo or <strong>J</strong> for the Right photo based on the Mandarin word you hear.</p>`,
+        stimulus: `
+            <div style="text-align: left; max-width: 700px; margin: auto;">
+                <h2>Study Instructions</h2>
+                <p>Welcome! You are about to participate in a statistical learning task. Here is how it works:</p>
+                <ul>
+                    <li>You will see a <strong>fixation cross (+)</strong>. Please focus on it.</li>
+                    <li>An image will flash briefly.</li>
+                    <li>You will hear a <strong>Mandarin word</strong> and see two photos.</li>
+                    <li>Press <strong>'F'</strong> if the word matches the <strong>left</strong> photo.</li>
+                    <li>Press <strong>'J'</strong> if the word matches the <strong>right</strong> photo.</li>
+                </ul>
+                <p>There are 4 rounds (blocks) in total. Please try to be as accurate and as fast as possible. This study takes about 7 minutes to complete.</p>
+            </div>`,
         choices: ['Begin Task']
     };
 
@@ -123,7 +135,8 @@
             return `<div class="stim-container">
                         <img src="${jsPsych.timelineVariable('left_img')}" class="stim-image">
                         <img src="${jsPsych.timelineVariable('right_img')}" class="stim-image">
-                    </div>`;
+                    </div>
+                    <p style="color: #666;">Press <strong>F</strong> (Left) or <strong>J</strong> (Right)</p>`;
         },
         trial_duration: 4000,
         data: function() {
