@@ -12,58 +12,37 @@
         .stim-container { display: flex; justify-content: space-around; align-items: center; width: 800px; margin: 0 auto; }
         .stim-image { width: 300px; height: auto; border: 2px solid #ccc; border-radius: 8px; }
         .fixation { font-size: 60px; font-weight: bold; }
-        .jspsych-btn { margin-top: 20px; }
     </style>
 </head>
 <body></body>
 <script>
-    /** 1. DATA DEFINITION **/
     const allItems = [
-        { name: 'drums', cat: 'music' }, { name: 'guitar', cat: 'music' },
-        { name: 'flute', cat: 'music' }, { name: 'piano', cat: 'music' },
-        { name: 'dog', cat: 'mammal' }, { name: 'lion', cat: 'mammal' },
-        { name: 'cow', cat: 'mammal' }, { name: 'horse', cat: 'mammal' },
-        { name: 'hammer', cat: 'carpenter' }, { name: 'nails', cat: 'carpenter' },
-        { name: 'saw', cat: 'carpenter' }, { name: 'carpenter_screwdriver', cat: 'carpenter' },
+        { name: 'drums', cat: 'instruments' }, { name: 'guitar', cat: 'instruments' },
+        { name: 'flute', cat: 'instruments' }, { name: 'piano', cat: 'instruments' },
+        { name: 'dog', cat: 'animals' }, { name: 'lion', cat: 'animals' },
+        { name: 'cow', cat: 'animals' }, { name: 'horse', cat: 'animals' },
+        { name: 'hammer', cat: 'tools' }, { name: 'nails', cat: 'tools' },
+        { name: 'saw', cat: 'tools' }, { name: 'screwdriver', cat: 'tools' },
         { name: 'gun', cat: 'weapons' }, { name: 'knife', cat: 'weapons' },
         { name: 'sword', cat: 'weapons' }, { name: 'cannon', cat: 'weapons' },
-        { name: 'furniture_chair', cat: 'furniture' }, { name: 'couch', cat: 'furniture' },
+        { name: 'chair', cat: 'furniture' }, { name: 'couch', cat: 'furniture' },
         { name: 'table', cat: 'furniture' }, { name: 'bed', cat: 'furniture' },
         { name: 'apple', cat: 'fruit' }, { name: 'orange', cat: 'fruit' },
         { name: 'banana', cat: 'fruit' }, { name: 'grape', cat: 'fruit' },
         { name: 'hand', cat: 'body' }, { name: 'mouth', cat: 'body' },
         { name: 'nose', cat: 'body' }, { name: 'ear', cat: 'body' },
-        { name: 'mountain', cat: 'earth' }, { name: 'river', cat: 'earth' },
-        { name: 'ocean', cat: 'earth' }, { name: 'volcano', cat: 'earth' }
+        { name: 'mountain', cat: 'nature' }, { name: 'river', cat: 'nature' },
+        { name: 'ocean', cat: 'nature' }, { name: 'volcano', cat: 'nature' }
     ];
 
     const emotions = ['disgust', 'fear', 'happy', 'sad'];
 
-    /** 2. INITIALIZE JSPSYCH **/
     const jsPsych = initJsPsych({
         on_finish: function() {
-            // Uncomment the lines below once you have a DataPipe ID
-            /*
-            const data = jsPsych.data.get().csv();
-            fetch("https://pipe.jspsych.org/api/data/", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({
-                    experimentID: "YOUR_DATAPIPE_ID",
-                    filename: `subject_${Math.floor(Math.random()*10000)}.csv`,
-                    data: data
-                })
-            }).then(() => {
-                document.body.innerHTML = '<h3>Study Complete. Data Saved.</h3>';
-            });
-            */
-            jsPsych.data.displayData(); // Currently showing data on screen for debugging
+            jsPsych.data.displayData();
         }
     });
 
-    /** 3. RANDOMIZATION LOGIC **/
-    
-    // Assign 16 items to Neutral and 4 to each of the 4 Emotions
     function getConditionMapping() {
         let shuffled = jsPsych.randomization.shuffle(allItems.map(i => i.name));
         let mapping = {};
@@ -77,38 +56,46 @@
 
     const currentMapping = getConditionMapping();
 
-    // Create Trial Variables with Random Foil and Random Side
     function generateTrialVariables() {
         return allItems.map(item => {
             const possibleFoils = allItems.filter(f => f.cat !== item.cat);
             const foil = jsPsych.randomization.sampleWithoutReplacement(possibleFoils, 1)[0];
             const targetIsLeft = Math.random() < 0.5;
 
+            // Updated path logic to handle your specific naming convention
+            const targetPath = `assets/stims/${item.cat}/${item.cat}_${item.name}.png`;
+            const foilPath = `assets/stims/${foil.cat}/${foil.cat}_${foil.name}.png`;
+
             return {
                 target_name: item.name,
-                target_path: `assets/stims/${item.cat}/${item.name}.png`,
-                foil_path: `assets/stims/${foil.cat}/${foil.name}.png`,
                 audio_path: `assets/audio/${item.name}.mp3`,
                 prime_cat: currentMapping[item.name],
-                left_img: targetIsLeft ? `assets/stims/${item.cat}/${item.name}.png` : `assets/stims/${foil.cat}/${foil.name}.png`,
-                right_img: targetIsLeft ? `assets/stims/${foil.cat}/${foil.name}.png` : `assets/stims/${item.cat}/${item.name}.png`,
+                left_img: targetIsLeft ? targetPath : foilPath,
+                right_img: targetIsLeft ? foilPath : targetPath,
                 correct_key: targetIsLeft ? 'f' : 'j'
             };
         });
     }
 
-    /** 4. ASSET PRELOADING **/
+    /** UPDATED ASSET PRELOADING **/
     const all_images = [];
-    ['neutral', ...emotions].forEach(e => { for(let i=1; i<=12; i++) all_images.push(`assets/primes/${e}/${e}_${i}.jpg`); });
-    allItems.forEach(i => all_images.push(`assets/stims/${i.cat}/${i.name}.png`));
+    // Primes: assets/primes/[emo]/[emo]_[1-12].jpg
+    ['neutral', ...emotions].forEach(e => { 
+        for(let i=1; i<=12; i++) all_images.push(`assets/primes/${e}/${e}_${i}.jpg`); 
+    });
+    // Stims: assets/stims/[cat]/[cat]_[name].png
+    allItems.forEach(i => {
+        all_images.push(`assets/stims/${i.cat}/${i.cat}_${i.name}.png`);
+    });
     
     const preload = {
         type: jsPsychPreload,
         images: all_images,
-        audio: allItems.map(i => `assets/audio/${i.name}.mp3`)
+        audio: allItems.map(i => `assets/audio/${i.name}.mp3`),
+        message: "Loading stimuli...",
+        continue_after_error: true
     };
 
-    /** 5. TRIAL BLOCKS **/
     const fixation = {
         type: jsPsychHtmlKeyboardResponse,
         stimulus: '<div class="fixation">+</div>',
@@ -151,12 +138,11 @@
         }
     };
 
-    /** 6. TIMELINE ASSEMBLY **/
     const main_procedure = {
         timeline: [fixation, prime_trial, test_trial],
         timeline_variables: generateTrialVariables(),
         randomize_order: true,
-        repetitions: 4 // Tracks statistical learning over 4 blocks
+        repetitions: 4
     };
 
     jsPsych.run([preload, main_procedure]);
