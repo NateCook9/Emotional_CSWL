@@ -140,20 +140,18 @@
         repetitions: 4
     };
 
-    /** 4. DATA VISUALIZATION BLOCK **/
+/** 4. DATA VISUALIZATION BLOCK (SPLIT BY CONDITION) **/
     const debrief_results = {
         type: jsPsychHtmlButtonResponse,
         choices: ['Finish and Export Data'],
         stimulus: function() {
             const testData = jsPsych.data.get().filter({phase: 'test'}).values();
-            
-            // Logic to calculate Block Number (Repetitions)
-            // Since we have 32 items, every 32 trials is a new block.
+            // Assign block numbers based on trial sequence (32 trials per block)
             testData.forEach((d, i) => { d.block = Math.floor(i / 32) + 1; });
 
             return `
-                <h3>Experiment Complete!</h3>
-                <p>Below is your learning progress across the 4 blocks of the task.</p>
+                <h3>Learning Progress by Emotion</h3>
+                <p>Comparing the statistical learning slope across emotional categories.</p>
                 <div id="results-container">
                     <div class="chart-box"><canvas id="accChart"></canvas></div>
                     <div class="chart-box"><canvas id="rtChart"></canvas></div>
@@ -163,43 +161,60 @@
         on_load: function() {
             const testData = jsPsych.data.get().filter({phase: 'test'});
             const blocks = [1, 2, 3, 4];
+            const activeConditions = ['neutral', 'disgust', 'fear', 'happy', 'sad'];
             
-            // Helper to get mean by block and category
-            const getStats = (metric) => {
-                return blocks.map(b => {
-                    const blockData = testData.filter({block: b});
-                    return blockData.select(metric).mean();
+            // Define specific colors for your emotional categories
+            const colors = {
+                neutral: 'rgba(128, 128, 128, 1)', // Gray
+                disgust: 'rgba(46, 139, 87, 1)',   // Sea Green
+                fear: 'rgba(148, 0, 211, 1)',      // Dark Violet
+                happy: 'rgba(255, 165, 0, 1)',     // Orange
+                sad: 'rgba(70, 130, 180, 1)'       // Steel Blue
+            };
+
+            // Function to generate dataset for each condition
+            const createDatasets = (metric) => {
+                return activeConditions.map(cond => {
+                    const dataPoints = blocks.map(b => {
+                        const subset = testData.filter({block: b, condition: cond});
+                        const val = subset.select(metric).mean();
+                        // For Accuracy, convert 0-1 to 0-100%
+                        return metric === 'correct' ? (val * 100).toFixed(1) : val.toFixed(0);
+                    });
+
+                    return {
+                        label: cond.charAt(0).toUpperCase() + cond.slice(1),
+                        data: dataPoints,
+                        borderColor: colors[cond],
+                        backgroundColor: colors[cond].replace('1)', '0.2)'),
+                        tension: 0.3,
+                        fill: false
+                    };
                 });
             };
 
-            // Accuracy Chart
+            // 1. Accuracy Chart
             new Chart(document.getElementById('accChart'), {
                 type: 'line',
-                data: {
-                    labels: ['Block 1', 'Block 2', 'Block 3', 'Block 4'],
-                    datasets: [{
-                        label: 'Overall Accuracy (%)',
-                        data: getStats('correct').map(v => v * 100),
-                        borderColor: 'rgb(75, 192, 192)',
-                        tension: 0.1
-                    }]
-                },
-                options: { plugins: { title: { display: true, text: 'Learning Accuracy' } } }
+                data: { labels: ['Block 1', 'Block 2', 'Block 3', 'Block 4'], datasets: createDatasets('correct') },
+                options: { 
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { title: { display: true, text: 'Accuracy % by Condition' } },
+                    scales: { y: { min: 0, max: 100, title: { display: true, text: 'Percent Correct' } } }
+                }
             });
 
-            // Reaction Time Chart
+            // 2. Reaction Time Chart
             new Chart(document.getElementById('rtChart'), {
                 type: 'line',
-                data: {
-                    labels: ['Block 1', 'Block 2', 'Block 3', 'Block 4'],
-                    datasets: [{
-                        label: 'Mean RT (ms)',
-                        data: getStats('rt'),
-                        borderColor: 'rgb(255, 99, 132)',
-                        tension: 0.1
-                    }]
-                },
-                options: { plugins: { title: { display: true, text: 'Response Speed (RT)' } } }
+                data: { labels: ['Block 1', 'Block 2', 'Block 3', 'Block 4'], datasets: createDatasets('rt') },
+                options: { 
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { title: { display: true, text: 'Mean RT (ms) by Condition' } },
+                    scales: { y: { title: { display: true, text: 'Milliseconds' } } }
+                }
             });
         }
     };
