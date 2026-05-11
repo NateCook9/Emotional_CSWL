@@ -4,14 +4,30 @@
     <title>Mandarin Statistical Learning Task</title>
     <script src="https://unpkg.com/jspsych@7.3.4"></script>
     <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.3"></script>
-    <script src="https://unpkg.com/@jspsych/plugin-image-keyboard-response@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.2.0"></script> <script src="https://unpkg.com/@jspsych/plugin-image-keyboard-response@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-audio-keyboard-response@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-preload@1.1.3"></script>
     <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" type="text/css" />
+    
     <style>
-        .stim-container { display: flex; justify-content: space-around; align-items: center; width: 800px; margin: 0 auto; }
+        /* Ensures the whole experiment stays centered */
+        .jspsych-content { max-width: 900px; }
+        
+        /* FIX: Scaling the Primes so they don't overflow */
+        .prime-img { 
+            max-height: 70vh; /* Limits height to 70% of the viewport */
+            width: auto;      /* Maintains aspect ratio */
+            border: 5px solid #eee;
+            border-radius: 10px;
+        }
+
+        /* Test stim container */
+        .stim-container { display: flex; justify-content: space-around; align-items: center; width: 100%; margin: 20px 0; }
         .stim-image { width: 300px; height: auto; border: 2px solid #ccc; border-radius: 8px; }
-        .fixation { font-size: 60px; font-weight: bold; }
+        .fixation { font-size: 60px; font-weight: bold; color: #333; }
+        
+        /* Instructions styling */
+        .instructions-box { text-align: left; line-height: 1.6; }
     </style>
 </head>
 <body></body>
@@ -43,6 +59,7 @@
         }
     });
 
+    /** 1. LOGIC FOR TRIALS **/
     function getConditionMapping() {
         let shuffled = jsPsych.randomization.shuffle(allItems.map(i => i.name));
         let mapping = {};
@@ -62,40 +79,50 @@
             const foil = jsPsych.randomization.sampleWithoutReplacement(possibleFoils, 1)[0];
             const targetIsLeft = Math.random() < 0.5;
 
-            // Updated path logic to handle your specific naming convention
-            const targetPath = `assets/stims/${item.cat}/${item.cat}_${item.name}.png`;
-            const foilPath = `assets/stims/${foil.cat}/${foil.cat}_${foil.name}.png`;
-
             return {
                 target_name: item.name,
                 audio_path: `assets/audio/${item.name}.mp3`,
                 prime_cat: currentMapping[item.name],
-                left_img: targetIsLeft ? targetPath : foilPath,
-                right_img: targetIsLeft ? foilPath : targetPath,
+                left_img: targetIsLeft ? `assets/stims/${item.cat}/${item.cat}_${item.name}.png` : `assets/stims/${foil.cat}/${foil.cat}_${foil.name}.png`,
+                right_img: targetIsLeft ? `assets/stims/${foil.cat}/${foil.cat}_${foil.name}.png` : `assets/stims/${item.cat}/${item.cat}_${item.name}.png`,
                 correct_key: targetIsLeft ? 'f' : 'j'
             };
         });
     }
 
-    /** UPDATED ASSET PRELOADING **/
+    /** 2. PRELOAD ASSETS **/
     const all_images = [];
-    // Primes: assets/primes/[emo]/[emo]_[1-12].jpg
-    ['neutral', ...emotions].forEach(e => { 
-        for(let i=1; i<=12; i++) all_images.push(`assets/primes/${e}/${e}_${i}.jpg`); 
-    });
-    // Stims: assets/stims/[cat]/[cat]_[name].png
-    allItems.forEach(i => {
-        all_images.push(`assets/stims/${i.cat}/${i.cat}_${i.name}.png`);
-    });
+    ['neutral', ...emotions].forEach(e => { for(let i=1; i<=12; i++) all_images.push(`assets/primes/${e}/${e}_${i}.jpg`); });
+    allItems.forEach(i => all_images.push(`assets/stims/${i.cat}/${i.cat}_${i.name}.png`));
     
     const preload = {
         type: jsPsychPreload,
         images: all_images,
         audio: allItems.map(i => `assets/audio/${i.name}.mp3`),
-        message: "Loading stimuli...",
+        message: "Loading study assets...",
         continue_after_error: true
     };
 
+    /** 3. INSTRUCTIONS (Unlocks Audio) **/
+    const instructions = {
+        type: jsPsychHtmlButtonResponse,
+        stimulus: `
+            <div class="instructions-box">
+                <h2>Welcome to the Study</h2>
+                <p>In this task, you will hear Mandarin words while seeing two images on the screen.</p>
+                <p><strong>Your Goal:</strong> Select the image that corresponds to the word you hear.</p>
+                <ul>
+                    <li>Press <strong>F</strong> for the Left image.</li>
+                    <li>Press <strong>J</strong> for the Right image.</li>
+                </ul>
+                <p>Before each word, a brief image will appear. Please stay focused on the screen.</p>
+                <p>Ensure your volume is turned up before clicking the button below.</p>
+            </div>`,
+        choices: ['Begin Experiment'],
+        post_trial_gap: 1000
+    };
+
+    /** 4. EXPERIMENTAL BLOCKS **/
     const fixation = {
         type: jsPsychHtmlKeyboardResponse,
         stimulus: '<div class="fixation">+</div>',
@@ -111,6 +138,29 @@
             return `assets/primes/${cat}/${cat}_${randIdx}.jpg`;
         },
         choices: "NO_KEYS",
+        trial_duration: 500,
+        // Added stim_class to apply our resizing CSS
+        stimulus_height: null, 
+        stimulus_width: null,
+        prompt: '<div style="height:20px;"></div>', // spacing
+        on_start: function(trial) {
+            // This applies a CSS class to the image rendered by the plugin
+            trial.stimulus = `<img src="${trial.stimulus}" class="prime-img">`;
+            // Because we changed the stimulus to HTML, we must switch to html plugin logic
+            // or just use the stimulus parameters. Let's use CSS for the img tag globally.
+        }
+    };
+    
+    // Simplest way to fix image size: override the stimulus to use an img tag with our class
+    const prime_trial_fixed = {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: function() {
+            const cat = jsPsych.timelineVariable('prime_cat');
+            const randIdx = Math.floor(Math.random() * 12) + 1;
+            const path = `assets/primes/${cat}/${cat}_${randIdx}.jpg`;
+            return `<img src="${path}" class="prime-img">`;
+        },
+        choices: "NO_KEYS",
         trial_duration: 500
     };
 
@@ -124,27 +174,23 @@
                     <img src="${jsPsych.timelineVariable('left_img')}" class="stim-image">
                     <img src="${jsPsych.timelineVariable('right_img')}" class="stim-image">
                 </div>
-                <p>Press <strong>F</strong> for Left | Press <strong>J</strong> for Right</p>`;
+                <p>Select the correct image (<strong>F</strong> or <strong>J</strong>)</p>`;
         },
         trial_duration: 4000,
         response_ends_trial: true,
-        data: {
-            target: jsPsych.timelineVariable('target_name'),
-            condition: jsPsych.timelineVariable('prime_cat'),
-            correct_response: jsPsych.timelineVariable('correct_key')
-        },
         on_finish: function(data) {
-            data.correct = jsPsych.pluginAPI.compareKeys(data.response, data.correct_response);
+            data.correct = jsPsych.pluginAPI.compareKeys(data.response, jsPsych.timelineVariable('correct_key'));
         }
     };
 
     const main_procedure = {
-        timeline: [fixation, prime_trial, test_trial],
+        timeline: [fixation, prime_trial_fixed, test_trial],
         timeline_variables: generateTrialVariables(),
         randomize_order: true,
         repetitions: 4
     };
 
-    jsPsych.run([preload, main_procedure]);
+    // Timeline starts with Preload, then Instructions (interaction), then Main Task
+    jsPsych.run([preload, instructions, main_procedure]);
 </script>
 </html>
