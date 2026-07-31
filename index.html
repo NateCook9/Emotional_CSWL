@@ -158,10 +158,12 @@
         type: jsPsychSurveyHtmlForm,
         button_label: 'hidden', 
         on_start: function() {
-            // Dynamically hide the native button JUST for this trial page view
-            const nativeBtn = document.getElementById('jspsych-survey-html-form-next');
-            if (nativeBtn) { nativeBtn.style.setProperty('display', 'none', 'important'); }
-        },
+                // Inject a dynamic style rule to guarantee the native button is hidden instantly
+                const style = document.createElement('style');
+                style.id = 'hide-native-btn';
+                style.innerHTML = '#jspsych-survey-html-form-next { display: none !important; }';
+                document.head.appendChild(style);
+            },
         html: `
             <div class="demographics-container">
                 <h2>Demographic Information</h2>
@@ -223,9 +225,16 @@
                 <button type="submit" class="custom-submit-btn">Continue to Experiment</button>
             </div>`,
         on_finish: function(data) {
+            const styleRule = document.getElementById('hide-native-btn');
+            if (styleRule) { styleRule.remove(); }
+        
+            // Explicitly check for array values if multiple boxes were ticked
+            const selectedRaces = Array.isArray(data.response.race) ? data.response.race.join(',') : data.response.race;
+        
             jsPsych.data.addProperties({
                 participant_age: data.response.age,
                 participant_gender: data.response.gender,
+                participant_race: selectedRaces || 'not_specified',
                 participant_hispanic: data.response.hispanic,
                 participant_education: data.response.education
             });
