@@ -8,7 +8,6 @@
     <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.2.0"></script>
     <script src="https://unpkg.com/@jspsych/plugin-image-keyboard-response@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-audio-keyboard-response@1.1.3"></script>
-    <script src="https://unpkg.com/@jspsych/plugin-preload@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-survey-html-form@1.0.3"></script>
     
     <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" type="text/css" />
@@ -31,6 +30,12 @@
 </head>
 <body></body>
 <script>
+    // Configurable runtime settings for dynamic instructions
+    const RUNTIME_CONFIG = {
+        primeDuration: 500, // Duration in ms (set to 0 if removing primes later)
+        numBlocks: 4        // Number of repetitions
+    };
+
     const allItems = [
         { name: 'drums', cat: 'instruments' }, { name: 'guitar', cat: 'instruments' },
         { name: 'flute', cat: 'instruments' }, { name: 'piano', cat: 'instruments' },
@@ -65,6 +70,8 @@
     }
     const currentMapping = getConditionMapping();
 
+    document.write
+
     function generateTrialVariables() {
         return allItems.map(item => {
             const possibleFoils = allItems.filter(f => f.cat !== item.cat);
@@ -81,18 +88,7 @@
         });
     }
 
-    /** 2. PRELOAD MANIFEST **/
-    const all_images = [];
-    activeEmotions.forEach(e => { for(let i=1; i<=12; i++) all_images.push(`assets/primes/${e}/${e}_${i}.jpg`); });
-    allItems.forEach(i => all_images.push(`assets/stims/${i.cat}/${i.cat}_${i.name}.png`));
-    
-    const preload = {
-        type: jsPsychPreload,
-        images: all_images,
-        audio: allItems.map(i => `assets/audio/${i.name}.mp3`)
-    };
-
-    /** 3. SECURITY GATEKEEPER BLOCK **/
+    /** 2. SECURITY GATEKEEPER BLOCK **/
     let passkey_correct = false;
 
     const passkey_trial = {
@@ -107,7 +103,6 @@
             </div>`,
         button_label: 'Verify Key',
         on_finish: function(data) {
-            // Check input code safely
             const enteredKey = data.response.passkey.trim().toUpperCase();
             if (enteredKey === "4GH73") {
                 passkey_correct = true;
@@ -117,7 +112,6 @@
         }
     };
 
-    // Loops the passkey prompt until correct entry is given
     const gatekeeper_loop = {
         timeline: [passkey_trial],
         loop_function: function() {
@@ -125,7 +119,7 @@
         }
     };
 
-    /** 4. DEMOGRAPHICS BLOCK **/
+    /** 3. DEMOGRAPHICS BLOCK **/
     const demographics_trial = {
         type: jsPsychSurveyHtmlForm,
         button_label: 'Continue to Experiment',
@@ -134,13 +128,11 @@
                 <h2>Demographic Information</h2>
                 <p>Please fill out the details below before we begin the task:</p>
                 
-                <!-- Age Input -->
                 <div class="form-question">
                     <label for="age">How old are you?</label>
                     <input type="number" id="age" name="age" min="18" max="100" required>
                 </div>
 
-                <!-- Gender Input -->
                 <div class="form-question">
                     <label for="gender">How do you describe yourself?</label>
                     <select id="gender" name="gender" required>
@@ -152,7 +144,6 @@
                     </select>
                 </div>
 
-                <!-- Race Checkboxes (Multi-select) -->
                 <div class="form-question">
                     <label>Choose one or more races that you consider yourself to be:</label>
                     <div class="checkbox-group">
@@ -166,7 +157,6 @@
                     </div>
                 </div>
 
-                <!-- Hispanic/Latino Split Question -->
                 <div class="form-question">
                     <label for="hispanic">Are you of Spanish, Hispanic, or Latino origin?</label>
                     <select id="hispanic" name="hispanic" required>
@@ -176,7 +166,6 @@
                     </select>
                 </div>
 
-                <!-- Education Level Dropdown -->
                 <div class="form-question">
                     <label for="education">What is the highest level of education you have completed?</label>
                     <select id="education" name="education" required>
@@ -192,7 +181,6 @@
                 </div>
             </div>`,
         on_finish: function(data) {
-            // Demographics values are seamlessly recorded inside the trial row dataset
             jsPsych.data.addProperties({
                 participant_age: data.response.age,
                 participant_gender: data.response.gender,
@@ -202,24 +190,28 @@
         }
     };
 
-    /** 5. INSTRUCTIONS & EXPERIMENTAL BLOCKS **/
+    /** 4. EXPLICIT INSTRUCTIONS BLOCK **/
     const instructions = {
         type: jsPsychHtmlButtonResponse,
-        stimulus: `<div style="text-align: left; max-width: 700px; margin: auto;">
+        stimulus: function() {
+            return `
+                <div style="text-align: left; max-width: 700px; margin: auto;">
                     <h2>Study Instructions</h2>
                     <p>Welcome! You are about to participate in a statistical learning task. Here is how it works:</p>
                     <ul>
-                        <li>Befoer each trial, you will see a <strong>fixation cross (+)</strong>. Please focus on it.</li>
+                        <li>Before each trial, you will see a <strong>fixation cross (+)</strong>. Please focus on it.</li>
                         ${RUNTIME_CONFIG.primeDuration > 0 ? '<li>Next, an image will flash briefly.</li>' : ''}
                         <li>Then, you will hear a <strong>Mandarin word</strong> and see two photos. Your task is to associate the Mandarin word with one of the photos.</li>
                         <li>Press <strong>'F'</strong> if the word matches the <strong>left</strong> photo.</li>
                         <li>Press <strong>'J'</strong> if the word matches the <strong>right</strong> photo.</li>
                     </ul>
                     <p>There are ${RUNTIME_CONFIG.numBlocks} rounds (blocks) in total. Please try to be as accurate and as fast as possible.</p>
-                </div>`,
+                </div>`;
+        },
         choices: ['Begin Task']
     };
 
+    /** 5. EXPERIMENTAL RUN BLOCKS **/
     const fixation = {
         type: jsPsychHtmlKeyboardResponse,
         stimulus: '<div class="fixation">+</div>',
@@ -235,7 +227,7 @@
             return `<img src="assets/primes/${cat}/${cat}_${randIdx}.jpg" class="prime-img">`;
         },
         choices: "NO_KEYS",
-        trial_duration: 500
+        trial_duration: RUNTIME_CONFIG.primeDuration
     };
 
     const test_trial = {
@@ -266,7 +258,7 @@
         timeline: [fixation, prime_trial, test_trial],
         timeline_variables: generateTrialVariables(),
         randomize_order: true,
-        repetitions: 4
+        repetitions: RUNTIME_CONFIG.numBlocks
     };
 
     /** 6. PROLIFIC COMPLETION TERMINAL **/
@@ -274,7 +266,7 @@
         type: jsPsychHtmlButtonResponse,
         choices: ['Exit Experiment'],
         stimulus: function() {
-            // Trigger your datapipe push here if using DataPipe execution script safely:
+            // DataPipe target hook can safely sit here when ready:
             /*
             const data = jsPsych.data.get().csv();
             fetch("https://pipe.jspsych.org/api/data/", {
@@ -299,7 +291,7 @@
         }
     };
 
-    // Construct the flow securely: Gateway -> Preload -> Demographics -> Instructions -> Loop -> Completion
-    jsPsych.run([gatekeeper_loop, preload, demographics_trial, instructions, main_procedure, prolific_completion]);
+    // Updated runner: Preload block completely removed from array execution pipeline
+    jsPsych.run([gatekeeper_loop, demographics_trial, instructions, main_procedure, prolific_completion]);
 </script>
 </html>
