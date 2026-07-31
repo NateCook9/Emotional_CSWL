@@ -28,15 +28,13 @@
         .checkbox-group { display: flex; flex-direction: column; gap: 5px; }
         .checkbox-group label { font-weight: normal; display: inline-block; margin-left: 5px; }
         
-        /* Dynamic container adjustment */
         .demographics-container { 
             max-width: 650px; 
             margin: auto; 
-            padding-bottom: 15vh; /* Clean breathing room below the integrated button */
+            padding-bottom: 15vh; 
             text-align: center;
         }
 
-        /* Styling to make our custom button match the native jsPsych style */
         .custom-submit-btn {
             background-color: #333;
             color: #fff;
@@ -51,8 +49,7 @@
         }
         .custom-submit-btn:hover { background-color: #555; }
 
-        /* Hide the native plugin button so it doesn't double render */
-        #jspsych-survey-html-form-next { display: none !important; }
+        /* REMOVED the global display: none rule from here so the gatekeeper button is safe! */
     </style>
 </head>
 <body></body>
