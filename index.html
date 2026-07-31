@@ -8,6 +8,7 @@
     <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.2.0"></script>
     <script src="https://unpkg.com/@jspsych/plugin-image-keyboard-response@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-audio-keyboard-response@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-preload@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-survey-html-form@1.0.3"></script>
     
     <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" type="text/css" />
@@ -20,20 +21,27 @@
         .stim-image { width: 280px; height: auto; border: 3px solid #fff; border-radius: 10px; }
         .fixation { font-size: 72px; font-weight: 300; color: #555; }
         
-        /* Survey Form Alignment Styles */
+        /* Survey Form Styling */
         .form-question { margin-bottom: 20px; text-align: left; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .form-question label { font-weight: bold; display: block; margin-bottom: 8px; }
         .form-question input[type="number"], .form-question select { padding: 8px; width: 100%; max-width: 300px; border: 1px solid #ccc; border-radius: 4px; }
         .checkbox-group { display: flex; flex-direction: column; gap: 5px; }
         .checkbox-group label { font-weight: normal; display: inline-block; margin-left: 5px; }
+        
+        /* TWEAK 1: Added substantial padding to the bottom of the form container 
+           to let the user scroll the submit button up to the lower third of the screen */
+        .demographics-container { 
+            max-width: 650px; 
+            margin: auto; 
+            padding-bottom: 35vh; 
+        }
     </style>
 </head>
 <body></body>
 <script>
-    // Configurable runtime settings for dynamic instructions
     const RUNTIME_CONFIG = {
-        primeDuration: 500, // Duration in ms (set to 0 if removing primes later)
-        numBlocks: 4        // Number of repetitions
+        primeDuration: 500, 
+        numBlocks: 4        
     };
 
     const allItems = [
@@ -58,7 +66,7 @@
     const activeEmotions = ['neutral', 'disgust', 'fear', 'happy'];
     const jsPsych = initJsPsych();
 
-    /** 1. CONDITION MAPPING & GENERATION **/
+    /** 1. MAPPING & TRIAL VARIABLE GENERATION **/
     function getConditionMapping() {
         let shuffled = jsPsych.randomization.shuffle(allItems.map(i => i.name));
         let mapping = {};
@@ -69,8 +77,6 @@
         return mapping;
     }
     const currentMapping = getConditionMapping();
-
-    document.write
 
     function generateTrialVariables() {
         return allItems.map(item => {
@@ -87,6 +93,19 @@
             };
         });
     }
+
+    /** BACKGROUND PRELOADER MANIFEST **/
+    const all_images = [];
+    activeEmotions.forEach(e => { for(let i=1; i<=12; i++) all_images.push(`assets/primes/${e}/${e}_${i}.jpg`); });
+    allItems.forEach(i => all_images.push(`assets/stims/${i.cat}/${i.cat}_${i.name}.png`));
+    
+    const preload = {
+        type: jsPsychPreload,
+        images: all_images,
+        audio: allItems.map(i => `assets/audio/${i.name}.mp3`),
+        message: "Loading study assets... Please wait.",
+        continue_after_error: true
+    };
 
     /** 2. SECURITY GATEKEEPER BLOCK **/
     let passkey_correct = false;
@@ -124,7 +143,8 @@
         type: jsPsychSurveyHtmlForm,
         button_label: 'Continue to Experiment',
         html: `
-            <div style="max-width: 650px; margin: auto;">
+            <!-- TWEAK 1: Modified wrapper container class with bottom spacing padding -->
+            <div class="demographics-container">
                 <h2>Demographic Information</h2>
                 <p>Please fill out the details below before we begin the task:</p>
                 
@@ -163,6 +183,7 @@
                         <option value="" disabled selected>Select an option</option>
                         <option value="no">No</option>
                         <option value="yes">Yes</option>
+                        <option value="prefer_not_to_say">Prefer not to say</option>
                     </select>
                 </div>
 
@@ -201,7 +222,7 @@
                     <ul>
                         <li>Before each trial, you will see a <strong>fixation cross (+)</strong>. Please focus on it.</li>
                         ${RUNTIME_CONFIG.primeDuration > 0 ? '<li>Next, an image will flash briefly.</li>' : ''}
-                        <li>Then, you will hear a <strong>Mandarin word</strong> and see two photos. Your task is to associate the Mandarin word with one of the photos.</li>
+                        <li>Then, you will hear a <strong>Mandarin word</strong> and see two photos. Throughout the multiple trials in this experiment, your task is to match the Mandarin word you hear with one of the photos.</li>
                         <li>Press <strong>'F'</strong> if the word matches the <strong>left</strong> photo.</li>
                         <li>Press <strong>'J'</strong> if the word matches the <strong>right</strong> photo.</li>
                     </ul>
@@ -266,20 +287,6 @@
         type: jsPsychHtmlButtonResponse,
         choices: ['Exit Experiment'],
         stimulus: function() {
-            // DataPipe target hook can safely sit here when ready:
-            /*
-            const data = jsPsych.data.get().csv();
-            fetch("https://pipe.jspsych.org/api/data/", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({
-                    experimentID: "YOUR_DATAPIPE_ID",
-                    filename: `subject_${Math.floor(Math.random()*10000)}.csv`,
-                    data: data
-                })
-            });
-            */
-            
             return `
                 <div style="padding: 20px;">
                     <h2>Thank you for your participation!</h2>
@@ -291,7 +298,7 @@
         }
     };
 
-    // Updated runner: Preload block completely removed from array execution pipeline
-    jsPsych.run([gatekeeper_loop, demographics_trial, instructions, main_procedure, prolific_completion]);
+    // Execution Sequence: Gatekeeper -> Demographics -> Preload Assets -> Instructions -> Tasks -> Prolific
+    jsPsych.run([gatekeeper_loop, demographics_trial, preload, instructions, main_procedure, prolific_completion]);
 </script>
 </html>
