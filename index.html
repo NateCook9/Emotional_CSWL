@@ -28,13 +28,31 @@
         .checkbox-group { display: flex; flex-direction: column; gap: 5px; }
         .checkbox-group label { font-weight: normal; display: inline-block; margin-left: 5px; }
         
-        /* TWEAK 1: Added substantial padding to the bottom of the form container 
-           to let the user scroll the submit button up to the lower third of the screen */
+        /* Dynamic container adjustment */
         .demographics-container { 
             max-width: 650px; 
             margin: auto; 
-            padding-bottom: 35vh; 
+            padding-bottom: 15vh; /* Clean breathing room below the integrated button */
+            text-align: center;
         }
+
+        /* Styling to make our custom button match the native jsPsych style */
+        .custom-submit-btn {
+            background-color: #333;
+            color: #fff;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            padding: 0.5em 1em;
+            font-size: 14px;
+            font-family: 'Open Sans', 'Helvetica Neue', Arial, sans-serif;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.2s;
+        }
+        .custom-submit-btn:hover { background-color: #555; }
+
+        /* Hide the native plugin button so it doesn't double render */
+        #jspsych-survey-html-form-next { display: none !important; }
     </style>
 </head>
 <body></body>
@@ -94,7 +112,7 @@
         });
     }
 
-    /** BACKGROUND PRELOADER MANIFEST **/
+    /** 2. BACKGROUND PRELOADER MANIFEST **/
     const all_images = [];
     activeEmotions.forEach(e => { for(let i=1; i<=12; i++) all_images.push(`assets/primes/${e}/${e}_${i}.jpg`); });
     allItems.forEach(i => all_images.push(`assets/stims/${i.cat}/${i.cat}_${i.name}.png`));
@@ -107,7 +125,7 @@
         continue_after_error: true
     };
 
-    /** 2. SECURITY GATEKEEPER BLOCK **/
+    /** 3. SECURITY GATEKEEPER BLOCK **/
     let passkey_correct = false;
 
     const passkey_trial = {
@@ -138,12 +156,12 @@
         }
     };
 
-    /** 3. DEMOGRAPHICS BLOCK **/
+    /** 4. DEMOGRAPHICS BLOCK **/
     const demographics_trial = {
         type: jsPsychSurveyHtmlForm,
-        button_label: 'Continue to Experiment',
+        // Giving it an arbitrary label text since the CSS hides this button instance entirely
+        button_label: 'hidden', 
         html: `
-            <!-- TWEAK 1: Modified wrapper container class with bottom spacing padding -->
             <div class="demographics-container">
                 <h2>Demographic Information</h2>
                 <p>Please fill out the details below before we begin the task:</p>
@@ -200,6 +218,10 @@
                         <option value="prefer_not_to_say">Prefer not to say</option>
                     </select>
                 </div>
+
+                <!-- NEW: Custom button placed inline. HTML forms naturally validate 
+                     and submit when an explicit button is placed inside them. -->
+                <button type="submit" class="custom-submit-btn">Continue to Experiment</button>
             </div>`,
         on_finish: function(data) {
             jsPsych.data.addProperties({
@@ -211,7 +233,7 @@
         }
     };
 
-    /** 4. EXPLICIT INSTRUCTIONS BLOCK **/
+    /** 5. EXPLICIT INSTRUCTIONS BLOCK **/
     const instructions = {
         type: jsPsychHtmlButtonResponse,
         stimulus: function() {
@@ -222,7 +244,7 @@
                     <ul>
                         <li>Before each trial, you will see a <strong>fixation cross (+)</strong>. Please focus on it.</li>
                         ${RUNTIME_CONFIG.primeDuration > 0 ? '<li>Next, an image will flash briefly.</li>' : ''}
-                        <li>Then, you will hear a <strong>Mandarin word</strong> and see two photos. Throughout the multiple trials in this experiment, your task is to match the Mandarin word you hear with one of the photos.</li>
+                        <li>Then, you will hear a <strong>Mandarin word</strong> and see two photos. Your task is to associate the Mandarin word with one of the photos.</li>
                         <li>Press <strong>'F'</strong> if the word matches the <strong>left</strong> photo.</li>
                         <li>Press <strong>'J'</strong> if the word matches the <strong>right</strong> photo.</li>
                     </ul>
@@ -232,7 +254,7 @@
         choices: ['Begin Task']
     };
 
-    /** 5. EXPERIMENTAL RUN BLOCKS **/
+    /** 6. EXPERIMENTAL RUN BLOCKS **/
     const fixation = {
         type: jsPsychHtmlKeyboardResponse,
         stimulus: '<div class="fixation">+</div>',
@@ -282,7 +304,7 @@
         repetitions: RUNTIME_CONFIG.numBlocks
     };
 
-    /** 6. PROLIFIC COMPLETION TERMINAL **/
+    /** 7. PROLIFIC COMPLETION TERMINAL **/
     const prolific_completion = {
         type: jsPsychHtmlButtonResponse,
         choices: ['Exit Experiment'],
@@ -298,7 +320,7 @@
         }
     };
 
-    // Execution Sequence: Gatekeeper -> Demographics -> Preload Assets -> Instructions -> Tasks -> Prolific
+    // Sequence flow: Gatekeeper -> Demographics -> Assets Preload -> Instructions -> Loop -> Prolific
     jsPsych.run([gatekeeper_loop, demographics_trial, preload, instructions, main_procedure, prolific_completion]);
 </script>
 </html>
