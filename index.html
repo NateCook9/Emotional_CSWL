@@ -2,175 +2,210 @@
 <html>
 <head>
     <title>Mandarin Statistical Learning Task</title>
+    <!-- jsPsych and Plugins -->
     <script src="https://unpkg.com/jspsych@7.3.4"></script>
     <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.2.0"></script>
     <script src="https://unpkg.com/@jspsych/plugin-image-keyboard-response@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-audio-keyboard-response@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-preload@1.1.3"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-survey-html-form@1.0.3"></script>
+    
     <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" type="text/css" />
     
     <style>
-        body { background-color: #f4f7f6; font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; padding: 0; }
-        .jspsych-content { max-width: 1000px; }
+        body { background-color: #f4f7f6; font-family: 'Helvetica Neue', Arial, sans-serif; }
+        .jspsych-content { max-width: 800px; }
         .prime-img { max-height: 60vh; width: auto; border: 5px solid #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .stim-container { display: flex; justify-content: space-around; align-items: center; width: 100%; margin: 30px 0; }
         .stim-image { width: 280px; height: auto; border: 3px solid #fff; border-radius: 10px; }
         .fixation { font-size: 72px; font-weight: 300; color: #555; }
         
-        /* Configuration UI Panel */
-        #config-panel { max-width: 550px; margin: 60px auto; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 4px 25px rgba(0,0,0,0.08); }
-        .config-group { margin-bottom: 22px; display: flex; flex-direction: column; }
-        .config-group label { font-weight: bold; margin-bottom: 8px; color: #333; }
-        .config-group select, .config-group input { padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
-        .launch-btn { background-color: #2ecc71; color: white; border: none; padding: 14px; width: 100%; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: 0.2s; }
-        .launch-btn:hover { background-color: #27ae60; }
-
-        /* Debrief Dashboard Improvements */
-        .dashboard-summary { display: flex; justify-content: space-around; background: #fff; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .summary-card { text-align: center; }
-        .summary-card h4 { margin: 0 0 5px 0; color: #666; font-size: 14px; text-transform: uppercase; }
-        .summary-card p { margin: 0; font-size: 28px; font-weight: bold; color: #2c3e50; }
-        #results-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 25px; margin: 20px 0; max-height: 65vh; overflow-y: auto; padding: 10px; }
-        .chart-box { width: 450px; height: 320px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
-        .chart-box.wide { width: 930px; height: 350px; }
-        .button-group { display: flex; justify-content: center; gap: 15px; margin-top: 20px; }
-        .download-btn { background-color: #4a90e2; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        /* Survey Form Alignment Styles */
+        .form-question { margin-bottom: 20px; text-align: left; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .form-question label { font-weight: bold; display: block; margin-bottom: 8px; }
+        .form-question input[type="number"], .form-question select { padding: 8px; width: 100%; max-width: 300px; border: 1px solid #ccc; border-radius: 4px; }
+        .checkbox-group { display: flex; flex-direction: column; gap: 5px; }
+        .checkbox-group label { font-weight: normal; display: inline-block; margin-left: 5px; }
     </style>
 </head>
-<body>
-
-    <!-- Setup Screen Panel -->
-    <div id="config-panel">
-        <h2 style="margin-top:0; color:#2c3e50;">Experiment Configuration</h2>
-        <p style="color:#7f8c8d; font-size:14px; margin-bottom:25px;">Adjust parameters below to modify the psycholinguistic task variant dynamically.</p>
-        
-        <div class="config-group">
-            <label>Prime Condition Presentation</label>
-            <select id="param-prime-dur">
-                <option value="500">Enabled (Standard: 500ms)</option>
-                <option value="1000">Enabled (Long: 1000ms)</option>
-                <option value="0">Disabled (No Primes Presented)</option>
-            </select>
-        </div>
-
-        <div class="config-group">
-            <label>Total Unique Target Stimuli Pool</label>
-            <select id="param-stim-count">
-                <option value="32">32 Items (Full Pool - Balanced)</option>
-                <option value="24">24 Items</option>
-                <option value="16">16 Items</option>
-                <option value="8">8 Items (Short Run)</option>
-            </select>
-        </div>
-
-        <div class="config-group">
-            <label>Number of Experimental Blocks</label>
-            <input type="number" id="param-blocks" value="4" min="1" max="10">
-        </div>
-
-        <button class="launch-btn" onclick="setupAndLaunchExperiment()">Launch Experiment variant</button>
-    </div>
-
-    <!-- Container targeting jsPsych execution environment -->
-    <div id="experiment-target"></div>
-
+<body></body>
 <script>
-    // Complete Item Master Pool (32 Stimuli evenly divided across 8 categories)
-    const allItemsPool = [
-        { name: 'drums', cat: 'music' }, { name: 'guitar', cat: 'music' }, { name: 'flute', cat: 'music' }, { name: 'piano', cat: 'music' },
-        { name: 'dog', cat: 'mammal' }, { name: 'lion', cat: 'mammal' }, { name: 'cow', cat: 'mammal' }, { name: 'horse', cat: 'mammal' },
-        { name: 'hammer', cat: 'carpenter' }, { name: 'nails', cat: 'carpenter' }, { name: 'saw', cat: 'carpenter' }, { name: 'screwdriver', cat: 'carpenter' },
-        { name: 'gun', cat: 'weapon' }, { name: 'knife', cat: 'weapon' }, { name: 'sword', cat: 'weapon' }, { name: 'cannon', cat: 'weapon' },
-        { name: 'chair', cat: 'furniture' }, { name: 'couch', cat: 'furniture' }, { name: 'table', cat: 'furniture' }, { name: 'bed', cat: 'furniture' },
-        { name: 'apple', cat: 'fruit' }, { name: 'orange', cat: 'fruit' }, { name: 'banana', cat: 'fruit' }, { name: 'grape', cat: 'fruit' },
-        { name: 'hand', cat: 'body' }, { name: 'mouth', cat: 'body' }, { name: 'nose', cat: 'body' }, { name: 'ear', cat: 'body' },
-        { name: 'mountain', cat: 'earth' }, { name: 'river', cat: 'earth' }, { name: 'ocean', cat: 'earth' }, { name: 'volcano', cat: 'earth' }
+    const allItems = [
+        { name: 'drums', cat: 'instruments' }, { name: 'guitar', cat: 'instruments' },
+        { name: 'flute', cat: 'instruments' }, { name: 'piano', cat: 'instruments' },
+        { name: 'dog', cat: 'animals' }, { name: 'lion', cat: 'animals' },
+        { name: 'cow', cat: 'animals' }, { name: 'horse', cat: 'animals' },
+        { name: 'hammer', cat: 'tools' }, { name: 'nails', cat: 'tools' },
+        { name: 'saw', cat: 'tools' }, { name: 'screwdriver', cat: 'tools' },
+        { name: 'gun', cat: 'weapons' }, { name: 'knife', cat: 'weapons' },
+        { name: 'sword', cat: 'weapons' }, { name: 'cannon', cat: 'weapons' },
+        { name: 'chair', cat: 'furniture' }, { name: 'couch', cat: 'furniture' },
+        { name: 'table', cat: 'furniture' }, { name: 'bed', cat: 'furniture' },
+        { name: 'apple', cat: 'fruit' }, { name: 'orange', cat: 'fruit' },
+        { name: 'banana', cat: 'fruit' }, { name: 'grape', cat: 'fruit' },
+        { name: 'hand', cat: 'body' }, { name: 'mouth', cat: 'body' },
+        { name: 'nose', cat: 'body' }, { name: 'ear', cat: 'body' },
+        { name: 'mountain', cat: 'nature' }, { name: 'river', cat: 'nature' },
+        { name: 'ocean', cat: 'nature' }, { name: 'volcano', cat: 'nature' }
     ];
 
     const activeEmotions = ['neutral', 'disgust', 'fear', 'happy'];
-    let jsPsych; 
-    
-    // Config runtime parameters populated dynamically by the setup menu
-    let RUNTIME_CONFIG = {
-        primeDuration: 500,
-        numStimuli: 32,
-        numBlocks: 4
-    };
+    const jsPsych = initJsPsych();
 
-    function setupAndLaunchExperiment() {
-        // Pull values out of selector configurations
-        RUNTIME_CONFIG.primeDuration = parseInt(document.getElementById('param-prime-dur').value);
-        RUNTIME_CONFIG.numStimuli = parseInt(document.getElementById('param-stim-count').value);
-        RUNTIME_CONFIG.numBlocks = parseInt(document.getElementById('param-blocks').value);
-
-        // Clear layout views
-        document.getElementById('config-panel').style.display = 'none';
-        
-        // Initialize jsPsych targeting the specific workspace wrapper
-        jsPsych = initJsPsych({
-            display_element: 'experiment-target'
+    /** 1. CONDITION MAPPING & GENERATION **/
+    function getConditionMapping() {
+        let shuffled = jsPsych.randomization.shuffle(allItems.map(i => i.name));
+        let mapping = {};
+        activeEmotions.forEach((emo, index) => {
+            let group = shuffled.slice(index * 8, (index + 1) * 8);
+            group.forEach(name => mapping[name] = emo);
         });
+        return mapping;
+    }
+    const currentMapping = getConditionMapping();
 
-        executeTimeline();
+    function generateTrialVariables() {
+        return allItems.map(item => {
+            const possibleFoils = allItems.filter(f => f.cat !== item.cat);
+            const foil = jsPsych.randomization.sampleWithoutReplacement(possibleFoils, 1)[0];
+            const targetIsLeft = Math.random() < 0.5;
+            return {
+                target_name: item.name,
+                audio_path: `assets/audio/${item.name}.mp3`,
+                prime_cat: currentMapping[item.name],
+                left_img: targetIsLeft ? `assets/stims/${item.cat}/${item.cat}_${item.name}.png` : `assets/stims/${foil.cat}/${foil.cat}_${foil.name}.png`,
+                right_img: targetIsLeft ? `assets/stims/${foil.cat}/${foil.cat}_${foil.name}.png` : `assets/stims/${item.cat}/${item.cat}_${item.name}.png`,
+                correct_key: targetIsLeft ? 'f' : 'j'
+            };
+        });
     }
 
-    function executeTimeline() {
-        // Subset baseline options matching configured scale
-        let activeItems = jsPsych.randomization.shuffle(allItemsPool).slice(0, RUNTIME_CONFIG.numStimuli);
+    /** 2. PRELOAD MANIFEST **/
+    const all_images = [];
+    activeEmotions.forEach(e => { for(let i=1; i<=12; i++) all_images.push(`assets/primes/${e}/${e}_${i}.jpg`); });
+    allItems.forEach(i => all_images.push(`assets/stims/${i.cat}/${i.cat}_${i.name}.png`));
+    
+    const preload = {
+        type: jsPsychPreload,
+        images: all_images,
+        audio: allItems.map(i => `assets/audio/${i.name}.mp3`)
+    };
 
-        // Assign mapping rules uniformly across context conditions
-        function getConditionMapping(items) {
-            let shuffledNames = jsPsych.randomization.shuffle(items.map(i => i.name));
-            let mapping = {};
-            let bucketSize = items.length / activeEmotions.length;
-            
-            activeEmotions.forEach((emo, index) => {
-                let group = shuffledNames.slice(index * bucketSize, (index + 1) * bucketSize);
-                group.forEach(name => mapping[name] = emo);
-            });
-            return mapping;
+    /** 3. SECURITY GATEKEEPER BLOCK **/
+    let passkey_correct = false;
+
+    const passkey_trial = {
+        type: jsPsychSurveyHtmlForm,
+        html: `
+            <div style="padding: 20px; text-align: center;">
+                <h2>Enter Access Passkey</h2>
+                <p>Please enter your 5-digit authorization code to access the study:</p>
+                <input type="text" id="passkey-input" name="passkey" required autocomplete="off" 
+                       style="padding: 10px; font-size: 18px; text-align: center; letter-spacing: 2px; text-transform: uppercase;">
+                <br><br>
+            </div>`,
+        button_label: 'Verify Key',
+        on_finish: function(data) {
+            // Check input code safely
+            const enteredKey = data.response.passkey.trim().toUpperCase();
+            if (enteredKey === "4GH73") {
+                passkey_correct = true;
+            } else {
+                alert("Invalid Passkey. Access Denied.");
+            }
         }
-        
-        const currentMapping = getConditionMapping(activeItems);
+    };
 
-        function generateTrialVariables() {
-            return activeItems.map(item => {
-                const possibleFoils = allItemsPool.filter(f => f.cat !== item.cat);
-                const foil = jsPsych.randomization.sampleWithoutReplacement(possibleFoils, 1)[0];
-                const targetIsLeft = Math.random() < 0.5;
-                return {
-                    target_name: item.name,
-                    target_cat: item.cat,
-                    audio_path: `assets/audio/${item.name}.mp3`,
-                    prime_cat: currentMapping[item.name],
-                    left_img: targetIsLeft ? `assets/stims/${item.cat}/${item.cat}_${item.name}.png` : `assets/stims/${foil.cat}/${foil.cat}_${foil.name}.png`,
-                    right_img: targetIsLeft ? `assets/stims/${foil.cat}/${foil.cat}_${foil.name}.png` : `assets/stims/${item.cat}/${item.cat}_${item.name}.png`,
-                    correct_key: targetIsLeft ? 'f' : 'j'
-                };
+    // Loops the passkey prompt until correct entry is given
+    const gatekeeper_loop = {
+        timeline: [passkey_trial],
+        loop_function: function() {
+            return !passkey_correct;
+        }
+    };
+
+    /** 4. DEMOGRAPHICS BLOCK **/
+    const demographics_trial = {
+        type: jsPsychSurveyHtmlForm,
+        button_label: 'Continue to Experiment',
+        html: `
+            <div style="max-width: 650px; margin: auto;">
+                <h2>Demographic Information</h2>
+                <p>Please fill out the details below before we begin the task:</p>
+                
+                <!-- Age Input -->
+                <div class="form-question">
+                    <label for="age">How old are you?</label>
+                    <input type="number" id="age" name="age" min="18" max="100" required>
+                </div>
+
+                <!-- Gender Input -->
+                <div class="form-question">
+                    <label for="gender">How do you describe yourself?</label>
+                    <select id="gender" name="gender" required>
+                        <option value="" disabled selected>Select an option</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="non-binary">Non-binary/third gender</option>
+                        <option value="prefer_not_to_say">Prefer not to say</option>
+                    </select>
+                </div>
+
+                <!-- Race Checkboxes (Multi-select) -->
+                <div class="form-question">
+                    <label>Choose one or more races that you consider yourself to be:</label>
+                    <div class="checkbox-group">
+                        <div><input type="checkbox" id="race_white" name="race" value="white"><label for="race_white">White or Caucasian</label></div>
+                        <div><input type="checkbox" id="race_black" name="race" value="black"><label for="race_black">Black or African American</label></div>
+                        <div><input type="checkbox" id="race_native" name="race" value="native_american"><label for="race_native">American Indian/Native American or Alaskan Native</label></div>
+                        <div><input type="checkbox" id="race_asian" name="race" value="asian"><label for="race_asian">Asian</label></div>
+                        <div><input type="checkbox" id="race_hawaiian" name="race" value="pacific_islander"><label for="race_hawaiian">Native Hawaiian or other Pacific Islander</label></div>
+                        <div><input type="checkbox" id="race_other" name="race" value="other"><label for="race_other">Other</label></div>
+                        <div><input type="checkbox" id="race_pns" name="race" value="prefer_not_to_say"><label for="race_pns">Prefer not to say</label></div>
+                    </div>
+                </div>
+
+                <!-- Hispanic/Latino Split Question -->
+                <div class="form-question">
+                    <label for="hispanic">Are you of Spanish, Hispanic, or Latino origin?</label>
+                    <select id="hispanic" name="hispanic" required>
+                        <option value="" disabled selected>Select an option</option>
+                        <option value="no">No</option>
+                        <option value="yes">Yes</option>
+                    </select>
+                </div>
+
+                <!-- Education Level Dropdown -->
+                <div class="form-question">
+                    <label for="education">What is the highest level of education you have completed?</label>
+                    <select id="education" name="education" required>
+                        <option value="" disabled selected>Select an option</option>
+                        <option value="some_high_school">Some high school or less</option>
+                        <option value="high_school_diploma">High school diploma or GED</option>
+                        <option value="some_college">Some college, but no degree</option>
+                        <option value="associates_technical">Associates or technical degree</option>
+                        <option value="bachelors">Bachelor’s degree</option>
+                        <option value="graduate">Graduate or professional degree (MA, MS, MBA, PhD, JD, MD, DDS etc.)</option>
+                        <option value="prefer_not_to_say">Prefer not to say</option>
+                    </select>
+                </div>
+            </div>`,
+        on_finish: function(data) {
+            // Demographics values are seamlessly recorded inside the trial row dataset
+            jsPsych.data.addProperties({
+                participant_age: data.response.age,
+                participant_gender: data.response.gender,
+                participant_hispanic: data.response.hispanic,
+                participant_education: data.response.education
             });
         }
+    };
 
-        // Dynamic resource loading map
-        const preload_images = [];
-        if (RUNTIME_CONFIG.primeDuration > 0) {
-            activeEmotions.forEach(e => { 
-                for(let i=1; i<=12; i++) preload_images.push(`assets/primes/${e}/${e}_${i}.jpg`); 
-            });
-        }
-        activeItems.forEach(i => preload_images.push(`assets/stims/${i.cat}/${i.cat}_${i.name}.png`));
-        
-        const preload = {
-            type: jsPsychPreload,
-            images: preload_images,
-            audio: activeItems.map(i => `assets/audio/${i.name}.mp3`)
-        };
-
-        const instructions = {
-            type: jsPsychHtmlButtonResponse,
-            stimulus: `
-                <div style="text-align: left; max-width: 700px; margin: auto;">
+    /** 5. INSTRUCTIONS & EXPERIMENTAL BLOCKS **/
+    const instructions = {
+        type: jsPsychHtmlButtonResponse,
+        stimulus: `<div style="text-align: left; max-width: 700px; margin: auto;">
                     <h2>Study Instructions</h2>
                     <p>Welcome! You are about to participate in a statistical learning task. Here is how it works:</p>
                     <ul>
@@ -182,233 +217,89 @@
                     </ul>
                     <p>There are ${RUNTIME_CONFIG.numBlocks} rounds (blocks) in total. Please try to be as accurate and as fast as possible.</p>
                 </div>`,
-            choices: ['Begin Task']
-        };
+        choices: ['Begin Task']
+    };
 
-        const fixation = {
-            type: jsPsychHtmlKeyboardResponse,
-            stimulus: '<div class="fixation">+</div>',
-            choices: "NO_KEYS",
-            trial_duration: 500
-        };
+    const fixation = {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: '<div class="fixation">+</div>',
+        choices: "NO_KEYS",
+        trial_duration: 500
+    };
 
-        const prime_trial = {
-            timeline: [{
-                type: jsPsychHtmlKeyboardResponse,
-                stimulus: function() {
-                    const cat = jsPsych.timelineVariable('prime_cat');
-                    const randIdx = Math.floor(Math.random() * 12) + 1;
-                    return `<img src="assets/primes/${cat}/${cat}_${randIdx}.jpg" class="prime-img">`;
-                },
-                choices: "NO_KEYS",
-                trial_duration: RUNTIME_CONFIG.primeDuration
-            }],
-            conditional_function: function() {
-                // If prime duration is set to 0, completely skip this block timeline node
-                return RUNTIME_CONFIG.primeDuration > 0;
-            }
-        };
+    const prime_trial = {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: function() {
+            const cat = jsPsych.timelineVariable('prime_cat');
+            const randIdx = Math.floor(Math.random() * 12) + 1;
+            return `<img src="assets/primes/${cat}/${cat}_${randIdx}.jpg" class="prime-img">`;
+        },
+        choices: "NO_KEYS",
+        trial_duration: 500
+    };
 
-        const test_trial = {
-            type: jsPsychAudioKeyboardResponse,
-            stimulus: jsPsych.timelineVariable('audio_path'),
-            choices: ['f', 'j'],
-            prompt: function() {
-                return `<div class="stim-container">
-                            <img src="${jsPsych.timelineVariable('left_img')}" class="stim-image">
-                            <img src="${jsPsych.timelineVariable('right_img')}" class="stim-image">
-                        </div>
-                        <p style="color: #666;">Press <strong>F</strong> (Left) or <strong>J</strong> (Right)</p>`;
-            },
-            trial_duration: 4000,
-            data: function() {
-                return {
-                    phase: 'test',
-                    target: jsPsych.timelineVariable('target_name'),
-                    category: jsPsych.timelineVariable('target_cat'),
-                    condition: jsPsych.timelineVariable('prime_cat'),
-                    correct_response: jsPsych.timelineVariable('correct_key')
-                };
-            },
-            on_finish: function(data) {
-                data.correct = jsPsych.pluginAPI.compareKeys(data.response, data.correct_response);
-            }
-        };
+    const test_trial = {
+        type: jsPsychAudioKeyboardResponse,
+        stimulus: jsPsych.timelineVariable('audio_path'),
+        choices: ['f', 'j'],
+        prompt: function() {
+            return `<div class="stim-container">
+                        <img src="${jsPsych.timelineVariable('left_img')}" class="stim-image">
+                        <img src="${jsPsych.timelineVariable('right_img')}" class="stim-image">
+                    </div>`;
+        },
+        trial_duration: 4000,
+        data: function() {
+            return {
+                phase: 'test',
+                target: jsPsych.timelineVariable('target_name'),
+                condition: jsPsych.timelineVariable('prime_cat'),
+                correct_response: jsPsych.timelineVariable('correct_key')
+            };
+        },
+        on_finish: function(data) {
+            data.correct = jsPsych.pluginAPI.compareKeys(data.response, data.correct_response);
+        }
+    };
 
-        const main_procedure = {
-            timeline: [fixation, prime_trial, test_trial],
-            timeline_variables: generateTrialVariables(),
-            randomize_order: true,
-            repetitions: RUNTIME_CONFIG.numBlocks
-        };
+    const main_procedure = {
+        timeline: [fixation, prime_trial, test_trial],
+        timeline_variables: generateTrialVariables(),
+        randomize_order: true,
+        repetitions: 4
+    };
 
-        /** EXPANDED DATA ANALYTICS DASHBOARD DEBRIEF **/
-        const debrief_results = {
-            type: jsPsychHtmlButtonResponse,
-            choices: ['Exit Experiment'],
-            stimulus: function() {
-                return `
-                <h3 style="margin-bottom:10px;">Experiment Performance Dashboard</h3>
-                
-                <!-- Macro Level Summary Cards Panel -->
-                <div class="dashboard-summary">
-                    <div class="summary-card">
-                        <h4>Overall Accuracy</h4>
-                        <p id="stat-overall-acc">-</p>
-                    </div>
-                    <div class="summary-card">
-                        <h4>Mean RT (All Items)</h4>
-                        <p id="stat-overall-rt">-</p>
-                    </div>
-                    <div class="summary-card">
-                        <h4>Blocks Completed</h4>
-                        <p>${RUNTIME_CONFIG.numBlocks}</p>
-                    </div>
-                    <div class="summary-card">
-                        <h4>Unique Stimuli Pool</h4>
-                        <p>${RUNTIME_CONFIG.numStimuli}</p>
-                    </div>
+    /** 6. PROLIFIC COMPLETION TERMINAL **/
+    const prolific_completion = {
+        type: jsPsychHtmlButtonResponse,
+        choices: ['Exit Experiment'],
+        stimulus: function() {
+            // Trigger your datapipe push here if using DataPipe execution script safely:
+            /*
+            const data = jsPsych.data.get().csv();
+            fetch("https://pipe.jspsych.org/api/data/", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    experimentID: "YOUR_DATAPIPE_ID",
+                    filename: `subject_${Math.floor(Math.random()*10000)}.csv`,
+                    data: data
+                })
+            });
+            */
+            
+            return `
+                <div style="padding: 20px;">
+                    <h2>Thank you for your participation!</h2>
+                    <br>
+                    <p style="font-size: 18px;">Please use this code to receive credit for your participation in Prolific: <strong>123456</strong></p>
+                    <br>
                 </div>
+            `;
+        }
+    };
 
-                <!-- Visualization Layout Workspace -->
-                <div id="results-container">
-                    <div class="chart-box"><canvas id="accChart"></canvas></div>
-                    <div class="chart-box"><canvas id="rtChart"></canvas></div>
-                    <div class="chart-box"><canvas id="categoryChart"></canvas></div>
-                    <div class="chart-box wide"><canvas id="itemChart"></canvas></div>
-                </div>
-                
-                <div class="button-group">
-                    <button id="download-json" class="download-btn">Download Raw Data (JSON)</button>
-                </div>`;
-            },
-            on_load: function() {
-                const testTrials = jsPsych.data.get().filter({phase: 'test'}).values();
-                
-                // Dynamically tag blocks using actual operational variables rather than a fixed 32 scale!
-                testTrials.forEach((d, i) => { 
-                    d.block = Math.floor(i / RUNTIME_CONFIG.numStimuli) + 1; 
-                });
-
-                // --- 1. Compute Macro Summary Metrics ---
-                const totalTrials = testTrials.length;
-                const correctTrials = testTrials.filter(d => d.correct).length;
-                const overallAcc = totalTrials > 0 ? ((correctTrials / totalTrials) * 100).toFixed(1) : 0;
-                
-                const validRtTrials = testTrials.filter(d => d.rt !== null && d.rt > 0);
-                const overallMeanRt = validRtTrials.length > 0 ? (validRtTrials.reduce((sum, d) => sum + d.rt, 0) / validRtTrials.length).toFixed(0) : 0;
-
-                document.getElementById('stat-overall-acc').innerText = `${overallAcc}%`;
-                document.getElementById('stat-overall-rt').innerText = `${overallMeanRt} ms`;
-
-                // --- 2. Build Structural Arrays for Categorical and Item aggregations ---
-                let catData = {}, itemData = {};
-
-                testTrials.forEach(t => {
-                    // Category Aggregation
-                    if(!catData[t.category]) catData[t.category] = { correct: 0, total: 0, rtSum: 0, rtCount: 0 };
-                    catData[t.category].total++;
-                    if(t.correct) catData[t.category].correct++;
-                    if(t.rt !== null) { catData[t.category].rtSum += t.rt; catData[t.category].rtCount++; }
-
-                    // Item Aggregation
-                    if(!itemData[t.target]) itemData[t.target] = { correct: 0, total: 0, rtSum: 0, rtCount: 0 };
-                    itemData[t.target].total++;
-                    if(t.correct) itemData[t.target].correct++;
-                    if(t.rt !== null) { itemData[t.target].rtSum += t.rt; itemData[t.target].rtCount++; }
-                });
-
-                // Generate arrays from lookup maps
-                const uniqueCategories = Object.keys(catData);
-                const catAccs = uniqueCategories.map(c => ((catData[c].correct / catData[c].total) * 100).toFixed(1));
-                const catRts = uniqueCategories.map(c => catData[c].rtCount > 0 ? (catData[c].rtSum / catData[c].rtCount).toFixed(0) : 0);
-
-                const uniqueItems = Object.keys(itemData);
-                const itemAccs = uniqueItems.map(i => ((itemData[i].correct / itemData[i].total) * 100).toFixed(1));
-                const itemRts = uniqueItems.map(i => itemData[i].rtCount > 0 ? (itemData[i].rtSum / itemData[i].rtCount).toFixed(0) : 0);
-
-                // --- 3. Render Visualization Interfaces (Charts) ---
-                const blocksArray = Array.from({length: RUNTIME_CONFIG.numBlocks}, (_, i) => `B${i+1}`);
-                const colors = { neutral: '#808080', disgust: '#2E8B57', fear: '#9400D3', happy: '#FFA500' };
-
-                const createConditionDatasets = (metric) => {
-                    return activeEmotions.map(cond => {
-                        const dataPoints = Array.from({length: RUNTIME_CONFIG.numBlocks}, (_, i) => {
-                            const b = i + 1;
-                            const subset = jsPsych.data.get().filter({phase: 'test', block: b, condition: cond});
-                            const val = subset.select(metric).mean();
-                            return metric === 'correct' ? (val * 100).toFixed(1) : (val || 0).toFixed(0);
-                        });
-                        return { label: cond.toUpperCase(), data: dataPoints, borderColor: colors[cond], tension: 0.3 };
-                    });
-                };
-
-                // Chart A: Accuracy by Block and Condition (Original Line Chart)
-                new Chart(document.getElementById('accChart'), {
-                    type: 'line',
-                    data: { labels: blocksArray, datasets: createConditionDatasets('correct') },
-                    options: { plugins: { title: { display: true, text: 'Accuracy % by Block & Condition' } }, scales: { y: { min: 0, max: 100 } } }
-                });
-
-                // Chart B: RT by Block and Condition (Original Line Chart)
-                new Chart(document.getElementById('rtChart'), {
-                    type: 'line',
-                    data: { labels: blocksArray, datasets: createConditionDatasets('rt') },
-                    options: { plugins: { title: { display: true, text: 'Reaction Time (ms) by Block & Condition' } } }
-                });
-
-                // Chart C: Performance Metrics By Semantic Category (Dual Axis Bar/Line Chart)
-                new Chart(document.getElementById('categoryChart'), {
-                    type: 'bar',
-                    data: {
-                        labels: uniqueCategories.map(c => c.toUpperCase()),
-                        datasets: [
-                            { label: 'Accuracy %', data: catAccs, backgroundColor: 'rgba(54, 162, 235, 0.6)', yAxisID: 'yAcc' },
-                            { label: 'RT (ms)', data: catRts, type: 'line', borderColor: '#e74c3c', backgroundColor: '#e74c3c', fill: false, yAxisID: 'yRt' }
-                        ]
-                    },
-                    options: {
-                        plugins: { title: { display: true, text: 'Performance by Semantic Category' } },
-                        scales: {
-                            yAcc: { type: 'linear', position: 'left', min: 0, max: 100, title: { display: true, text: 'Accuracy %' } },
-                            yRt: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Reaction Time (ms)' } }
-                        }
-                    }
-                });
-
-                // Chart D: Granular Performance Breakdown By Individual Item Name
-                new Chart(document.getElementById('itemChart'), {
-                    type: 'bar',
-                    data: {
-                        labels: uniqueItems,
-                        datasets: [
-                            { label: 'Accuracy %', data: itemAccs, backgroundColor: '#2ecc71', yAxisID: 'yAcc' },
-                            { label: 'RT (ms)', data: itemRts, backgroundColor: '#9b59b6', yAxisID: 'yRt' }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { title: { display: true, text: 'Item-by-Item Deep Dive Breakdown' } },
-                        scales: {
-                            yAcc: { type: 'linear', position: 'left', min: 0, max: 100, title: { display: true, text: 'Accuracy %' } },
-                            yRt: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'RT (ms)' } }
-                        }
-                    }
-                });
-
-                // Raw Data Download Anchor Binding
-                document.getElementById('download-json').addEventListener('click', () => {
-                    const blob = new Blob([jsPsych.data.get().json()], {type: 'application/json'});
-                    const a = document.createElement('a');
-                    a.href = URL.createObjectURL(blob);
-                    a.download = `cswl_parameter_run_data.json`;
-                    a.click();
-                });
-            }
-        };
-
-        jsPsych.run([preload, instructions, main_procedure, debrief_results]);
-    }
+    // Construct the flow securely: Gateway -> Preload -> Demographics -> Instructions -> Loop -> Completion
+    jsPsych.run([gatekeeper_loop, preload, demographics_trial, instructions, main_procedure, prolific_completion]);
 </script>
 </html>
