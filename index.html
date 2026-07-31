@@ -156,8 +156,12 @@
     /** 4. DEMOGRAPHICS BLOCK **/
     const demographics_trial = {
         type: jsPsychSurveyHtmlForm,
-        // Giving it an arbitrary label text since the CSS hides this button instance entirely
         button_label: 'hidden', 
+        on_start: function() {
+            // Dynamically hide the native button JUST for this trial page view
+            const nativeBtn = document.getElementById('jspsych-survey-html-form-next');
+            if (nativeBtn) { nativeBtn.style.setProperty('display', 'none', 'important'); }
+        },
         html: `
             <div class="demographics-container">
                 <h2>Demographic Information</h2>
@@ -216,8 +220,6 @@
                     </select>
                 </div>
 
-                <!-- NEW: Custom button placed inline. HTML forms naturally validate 
-                     and submit when an explicit button is placed inside them. -->
                 <button type="submit" class="custom-submit-btn">Continue to Experiment</button>
             </div>`,
         on_finish: function(data) {
