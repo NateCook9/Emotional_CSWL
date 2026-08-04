@@ -250,9 +250,9 @@
                     <h2>Study Instructions</h2>
                     <p>Welcome! You are about to participate in a statistical learning task. Here is how it works:</p>
                     <ul>
-                        <li>At the beginning of each trial, you will see a <strong>fixation cross (+)</strong>. Please focus on it.</li>
-                        <li>Next, an image will flash briefly. This images is not needed for the task and may be disregard.</li>
-                        <li>Then, you will hear a <strong>Mandarin word</strong> and see two photos. Throughout the trials of this experiment, your task is to match the Mandarin word you hear with one of the objects in the photos.</li>
+                        <li>At the beginning of each trial, you will see a <strong>fixation cross (+)</strong>.</li>
+                        <li>Next, a photo will flash briefly. This photo is not needed for the task and may be disregarded.</li>
+                        <li>Then, you will hear a <strong>Mandarin word</strong> and see two photos. Throughout the experiment, your task is to match the Mandarin word you hear with one of the objects in the photos.</li>
                         <li>Press <strong>'F'</strong> if the word matches the <strong>left</strong> photo.</li>
                         <li>Press <strong>'J'</strong> if the word matches the <strong>right</strong> photo.</li>
                     </ul>
@@ -290,6 +290,8 @@
         type: jsPsychAudioKeyboardResponse,
         stimulus: jsPsych.timelineVariable('audio_path'),
         choices: ['f', 'j'],
+        // Force native HTML5 audio tag streaming rather than Web Audio buffer decoding
+        html5: true, 
         prompt: function() {
             return `<div class="stim-container">
                         <img src="${jsPsych.timelineVariable('left_img')}" class="stim-image">
