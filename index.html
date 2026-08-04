@@ -48,8 +48,6 @@
             transition: background-color 0.2s;
         }
         .custom-submit-btn:hover { background-color: #555; }
-
-        /* REMOVED the global display: none rule from here so the gatekeeper button is safe! */
     </style>
 </head>
 <body></body>
@@ -81,17 +79,17 @@
     const activeEmotions = ['neutral', 'disgust', 'fear', 'happy'];
     const jsPsych = initJsPsych();
 
-    /** 1. MAPPING & TRIAL VARIABLE GENERATION **/
-    function getConditionMapping() {
+    /** 1. STRATEGY B: DYNAMIC SUBJECT-LEVEL 25% MAPPING **/
+    let currentMapping = {};
+
+    function setupSubjectMapping() {
         let shuffled = jsPsych.randomization.shuffle(allItems.map(i => i.name));
-        let mapping = {};
+        currentMapping = {};
         activeEmotions.forEach((emo, index) => {
             let group = shuffled.slice(index * 8, (index + 1) * 8);
-            group.forEach(name => mapping[name] = emo);
+            group.forEach(name => currentMapping[name] = emo);
         });
-        return mapping;
     }
-    const currentMapping = getConditionMapping();
 
     function generateTrialVariables() {
         return allItems.map(item => {
@@ -109,7 +107,7 @@
         });
     }
 
-    /** 2. BACKGROUND PRELOADER MANIFEST **/
+    /** 2. PRELOAD MANIFEST **/
     const all_images = [];
     activeEmotions.forEach(e => { for(let i=1; i<=12; i++) all_images.push(`assets/primes/${e}/${e}_${i}.jpg`); });
     allItems.forEach(i => all_images.push(`assets/stims/${i.cat}/${i.cat}_${i.name}.png`));
@@ -158,12 +156,11 @@
         type: jsPsychSurveyHtmlForm,
         button_label: 'hidden', 
         on_start: function() {
-                // Inject a dynamic style rule to guarantee the native button is hidden instantly
-                const style = document.createElement('style');
-                style.id = 'hide-native-btn';
-                style.innerHTML = '#jspsych-survey-html-form-next { display: none !important; }';
-                document.head.appendChild(style);
-            },
+            const style = document.createElement('style');
+            style.id = 'hide-native-btn';
+            style.innerHTML = '#jspsych-survey-html-form-next { display: none !important; }';
+            document.head.appendChild(style);
+        },
         html: `
             <div class="demographics-container">
                 <h2>Demographic Information</h2>
@@ -228,7 +225,6 @@
             const styleRule = document.getElementById('hide-native-btn');
             if (styleRule) { styleRule.remove(); }
         
-            // Explicitly check for array values if multiple boxes were ticked
             const selectedRaces = Array.isArray(data.response.race) ? data.response.race.join(',') : data.response.race;
         
             jsPsych.data.addProperties({
@@ -259,7 +255,11 @@
                     <p>Please try to be as accurate and as fast as possible.</p>
                 </div>`;
         },
-        choices: ['Begin Task']
+        choices: ['Begin Task'],
+        on_finish: function() {
+            // Generate unique subject-level mapping and variables AFTER instruction click unlocks audio
+            setupSubjectMapping();
+        }
     };
 
     /** 6. EXPERIMENTAL RUN BLOCKS **/
@@ -307,7 +307,7 @@
 
     const main_procedure = {
         timeline: [fixation, prime_trial, test_trial],
-        timeline_variables: generateTrialVariables(),
+        timeline_variables: generateTrialVariables, // Passed as function reference for dynamic runtime evaluation
         randomize_order: true,
         repetitions: RUNTIME_CONFIG.numBlocks
     };
@@ -328,7 +328,7 @@
         }
     };
 
-    // Sequence flow: Gatekeeper -> Demographics -> Assets Preload -> Instructions -> Loop -> Prolific
-    jsPsych.run([gatekeeper_loop, demographics_trial, preload, instructions, main_procedure, prolific_completion]);
+    // Execution Sequence: Gatekeeper -> Demographics -> Instructions (Unlocks Audio) -> Assets Preload -> Tasks -> Prolific
+    jsPsych.run([gatekeeper_loop, demographics_trial, instructions, preload, main_procedure, prolific_completion]);
 </script>
 </html>
