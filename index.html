@@ -79,7 +79,52 @@
     const activeEmotions = ['neutral', 'disgust', 'fear', 'happy'];
     const jsPsych = initJsPsych();
 
-    /** 1. SECURITY GATEKEEPER BLOCK **/
+    /** 1. STRATEGY B: SUBJECT-LEVEL RANDOMIZED 25% MAPPING **/
+    function getSubjectConditionMapping() {
+        let shuffled = jsPsych.randomization.shuffle(allItems.map(i => i.name));
+        let mapping = {};
+        activeEmotions.forEach((emo, index) => {
+            let group = shuffled.slice(index * 8, (index + 1) * 8);
+            group.forEach(name => mapping[name] = emo);
+        });
+        return mapping;
+    }
+    
+    // Executes fresh in each participant's browser session
+    const currentMapping = getSubjectConditionMapping();
+
+    function generateTrialVariables() {
+        return allItems.map(item => {
+            const possibleFoils = allItems.filter(f => f.cat !== item.cat);
+            const foil = jsPsych.randomization.sampleWithoutReplacement(possibleFoils, 1)[0];
+            const targetIsLeft = Math.random() < 0.5;
+            return {
+                target_name: item.name,
+                audio_path: `assets/audio/${item.name}.mp3`,
+                prime_cat: currentMapping[item.name],
+                left_img: targetIsLeft ? `assets/stims/${item.cat}/${item.cat}_${item.name}.png` : `assets/stims/${foil.cat}/${foil.cat}_${foil.name}.png`,
+                right_img: targetIsLeft ? `assets/stims/${foil.cat}/${foil.cat}_${foil.name}.png` : `assets/stims/${item.cat}/${item.cat}_${item.name}.png`,
+                correct_key: targetIsLeft ? 'f' : 'j'
+            };
+        });
+    }
+
+    const trialVariables = generateTrialVariables();
+
+    /** 2. PRELOAD MANIFEST **/
+    const all_images = [];
+    activeEmotions.forEach(e => { for(let i=1; i<=12; i++) all_images.push(`assets/primes/${e}/${e}_${i}.jpg`); });
+    allItems.forEach(i => all_images.push(`assets/stims/${i.cat}/${i.cat}_${i.name}.png`));
+    
+    const preload = {
+        type: jsPsychPreload,
+        images: all_images,
+        audio: allItems.map(i => `assets/audio/${i.name}.mp3`),
+        message: "Loading study assets... Please wait.",
+        continue_after_error: true
+    };
+
+    /** 3. SECURITY GATEKEEPER BLOCK **/
     let passkey_correct = false;
 
     const passkey_trial = {
@@ -110,7 +155,7 @@
         }
     };
 
-    /** 2. DEMOGRAPHICS BLOCK **/
+    /** 4. DEMOGRAPHICS BLOCK **/
     const demographics_trial = {
         type: jsPsychSurveyHtmlForm,
         button_label: 'hidden', 
@@ -196,7 +241,7 @@
         }
     };
 
-    /** 3. INSTRUCTIONS BLOCK **/
+    /** 5. INSTRUCTIONS BLOCK **/
     const instructions = {
         type: jsPsychHtmlButtonResponse,
         stimulus: function() {
@@ -217,8 +262,7 @@
         choices: ['Begin Task']
     };
 
-    /** 4. DYNAMIC EXPERIMENTAL PROCEDURE BLOCK **/
-    // Fixation, Prime, and Test Trial Templates
+    /** 6. EXPERIMENTAL PROCEDURE BLOCK **/
     const fixation = {
         type: jsPsychHtmlKeyboardResponse,
         stimulus: '<div class="fixation">+</div>',
@@ -261,58 +305,14 @@
         }
     };
 
-    // A conditional wrapper node that dynamically generates variables & runs preloader safely
-    const dynamic_experiment_node = {
-        timeline: [
-            {
-                type: jsPsychPreload,
-                images: function() {
-                    const images = [];
-                    activeEmotions.forEach(e => { for(let i=1; i<=12; i++) images.push(`assets/primes/${e}/${e}_${i}.jpg`); });
-                    allItems.forEach(i => images.push(`assets/stims/${i.cat}/${i.cat}_${i.name}.png`));
-                    return images;
-                },
-                audio: allItems.map(i => `assets/audio/${i.name}.mp3`),
-                message: "Loading study assets... Please wait.",
-                continue_after_error: true
-            },
-            {
-                timeline: [fixation, prime_trial, test_trial],
-                timeline_variables: null, // Will be filled in on_timeline_start
-                randomize_order: true,
-                repetitions: RUNTIME_CONFIG.numBlocks
-            }
-        ],
-        on_timeline_start: function() {
-            // 1. Generate Strategy B 25% Equal Mapping (8 items per category)
-            let shuffled = jsPsych.randomization.shuffle(allItems.map(i => i.name));
-            let mapping = {};
-            activeEmotions.forEach((emo, index) => {
-                let group = shuffled.slice(index * 8, (index + 1) * 8);
-                group.forEach(name => mapping[name] = emo);
-            });
-
-            // 2. Generate Trial Variables
-            const trialVars = allItems.map(item => {
-                const possibleFoils = allItems.filter(f => f.cat !== item.cat);
-                const foil = jsPsych.randomization.sampleWithoutReplacement(possibleFoils, 1)[0];
-                const targetIsLeft = Math.random() < 0.5;
-                return {
-                    target_name: item.name,
-                    audio_path: `assets/audio/${item.name}.mp3`,
-                    prime_cat: mapping[item.name],
-                    left_img: targetIsLeft ? `assets/stims/${item.cat}/${item.cat}_${item.name}.png` : `assets/stims/${foil.cat}/${foil.cat}_${foil.name}.png`,
-                    right_img: targetIsLeft ? `assets/stims/${foil.cat}/${foil.cat}_${foil.name}.png` : `assets/stims/${item.cat}/${item.cat}_${item.name}.png`,
-                    correct_key: targetIsLeft ? 'f' : 'j'
-                };
-            });
-
-            // 3. Inject trial variables directly into the sub-procedure block
-            this.timeline[1].timeline_variables = trialVars;
-        }
+    const main_procedure = {
+        timeline: [fixation, prime_trial, test_trial],
+        timeline_variables: trialVariables,
+        randomize_order: true,
+        repetitions: RUNTIME_CONFIG.numBlocks
     };
 
-    /** 5. PROLIFIC COMPLETION TERMINAL **/
+    /** 7. PROLIFIC COMPLETION TERMINAL **/
     const prolific_completion = {
         type: jsPsychHtmlButtonResponse,
         choices: ['Exit Experiment'],
@@ -328,7 +328,7 @@
         }
     };
 
-    // Main Execution Flow
-    jsPsych.run([gatekeeper_loop, demographics_trial, instructions, dynamic_experiment_node, prolific_completion]);
+    // Sequence flow: Gatekeeper -> Demographics -> Instructions (Unlocks Audio) -> Preload -> Experiment -> Prolific
+    jsPsych.run([gatekeeper_loop, demographics_trial, instructions, preload, main_procedure, prolific_completion]);
 </script>
 </html>
