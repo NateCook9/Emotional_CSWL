@@ -266,7 +266,7 @@
                     <p>Please try to be as accurate and as fast as possible.</p>
                 </div>`;
         },
-        choices: ['Begin Task'],
+        choices: ['See example & Check audio'],
         on_finish: function() {
             // Unlock & resume Web Audio API context for Safari
             var context = jsPsych.pluginAPI.audioContext();
@@ -282,7 +282,7 @@
         stimulus: function() {
             return `
                 <div style="max-width: 700px; margin: auto; text-align: center;">
-                    <h2>Audio & Practice Check</h2>
+                    <h2>Practice & Audio Check</h2>
                     <p style="text-align: left; font-size: 16px; line-height: 1.5;">
                         This resembles a typical trial of this experiment. You will hear an audio clip and match it to one of the images. 
                         In this case, the Mandarin Chinese word means <strong>'carrot'</strong>, so you would press <strong>'F'</strong> on your keyboard to select the image of the carrot.
