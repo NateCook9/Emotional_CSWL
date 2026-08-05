@@ -116,6 +116,7 @@
         });
     }
 
+    // RESTORED: Generates the trial variables array for main_procedure
     const trialVariables = generateTrialVariables();
 
     /** 2. SECURITY GATEKEEPER BLOCK **/
@@ -295,7 +296,7 @@
                     <ul>
                         <li>At the beginning of each trial, you will see a <strong>fixation cross (+)</strong>.</li>
                         <li>Next, a photo will flash briefly. This photo is not needed for the task and may be disregarded.</li>
-                        <li>Then, you will hear a <strong>Mandarin word</strong> and see two images. Throughout the experiment, your task is to match the Mandarin word you hear with one of the images.</li>
+                        <li>Then, you will hear a Mandarin word and see two images. Throughout the experiment, <strong>your task is to match the Mandarin word you hear with one of the images.</strong></li>
                         <li>Press <strong>'F'</strong> if the word matches the <strong>left</strong> image.</li>
                         <li>Press <strong>'J'</strong> if the word matches the <strong>right</strong> image.</li>
                     </ul>
@@ -305,10 +306,6 @@
         choices: ['Continue to Audio Check'],
         on_finish: function() {
             return_to_instructions = false;
-            var context = jsPsych.pluginAPI.audioContext();
-            if (context !== null && context.state === 'suspended') {
-                context.resume();
-            }
         }
     };
 
@@ -351,7 +348,7 @@
             } else {
                 return_to_instructions = false;
                 
-                // CRITICAL FOR SAFARI: Unlock & resume Web Audio API right as the user clicks 'Continue'
+                // SAFARI WEBAUDIO UNLOCK: Resume context directly inside button click handler
                 try {
                     var ctx = jsPsych.pluginAPI.audioContext();
                     if (ctx !== null && ctx.state === 'suspended') {
@@ -442,10 +439,9 @@
     };
 
     /** 8. DATAPIPE DATA TRANSMISSION BLOCK **/
-    // Replace "YOUR_DATAPIPE_EXPERIMENT_ID" with the exact ID from pipe.jspsych.org
     const datapipe_experiment_id = "LRFn68OMzhBG"; 
 
-    // Generate a unique subject filename using timestamp and a random string
+    // Generate a unique subject filename using random string
     const subject_id = jsPsych.randomization.randomID(10);
     const filename = `sub-${subject_id}_data.csv`;
 
@@ -456,7 +452,7 @@
         filename: filename,
         data_string: () => jsPsych.data.get().csv()
     };
-    
+
     /** 9. PROLIFIC COMPLETION TERMINAL **/
     const prolific_completion = {
         type: jsPsychHtmlButtonResponse,
