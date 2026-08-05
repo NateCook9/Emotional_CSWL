@@ -112,7 +112,7 @@
     // RESTORED: Generates the variables array for main_procedure
     const trialVariables = generateTrialVariables();
 
-    /** 2. PRELOAD MANIFEST **/
+    /** 2. PRELOAD MANIFEST (UPDATED WITH EXPLICIT WEBAUDIO FLAG) **/
     const all_images = [];
     activeEmotions.forEach(e => { for(let i=1; i<=12; i++) all_images.push(`assets/primes/${e}/${e}_${i}.jpg`); });
     allItems.forEach(i => all_images.push(`assets/stims/${i.cat}/${i.cat}_${i.name}.png`));
@@ -121,6 +121,7 @@
         type: jsPsychPreload,
         images: all_images,
         audio: allItems.map(i => `assets/audio/${i.name}.mp3`),
+        use_webaudio: true, // Forces decoding into the now-active Web Audio context
         message: "Loading study assets... Please wait.",
         continue_after_error: true
     };
@@ -242,7 +243,7 @@
         }
     };
 
-    /** 5. INSTRUCTIONS BLOCK WITH WEB AUDIO UNLOCK **/
+    /** 5. INSTRUCTIONS BLOCK WITH SAFARI AUDIO UNLOCK **/
     const instructions = {
         type: jsPsychHtmlButtonResponse,
         stimulus: function() {
@@ -262,6 +263,7 @@
         },
         choices: ['Begin Task'],
         on_finish: function() {
+            // Unlock & resume Web Audio API context for Safari
             var context = jsPsych.pluginAPI.audioContext();
             if (context !== null && context.state === 'suspended') {
                 context.resume();
@@ -335,7 +337,7 @@
         }
     };
 
-    // Execution sequence: Gatekeeper -> Demographics -> Instructions -> Preload -> Experiment -> Completion
+    // Execution sequence: Gatekeeper -> Demographics -> Instructions (Click unlocks Audio) -> Preload -> Experiment -> Completion
     jsPsych.run([gatekeeper_loop, demographics_trial, instructions, preload, main_procedure, prolific_completion]);
 </script>
 </html>
