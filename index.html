@@ -10,6 +10,7 @@
     <script src="https://unpkg.com/@jspsych/plugin-audio-keyboard-response@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-preload@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-survey-html-form@1.0.3"></script>
+    <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe@1.3.0"></script> <!-- DataPipe Plugin for OSF Integration -->
     
     <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" type="text/css" />
     
@@ -440,7 +441,23 @@
         repetitions: RUNTIME_CONFIG.numBlocks
     };
 
-    /** 8. PROLIFIC COMPLETION TERMINAL **/
+    /** 8. DATAPIPE DATA TRANSMISSION BLOCK **/
+    // Replace "YOUR_DATAPIPE_EXPERIMENT_ID" with the exact ID from pipe.jspsych.org
+    const datapipe_experiment_id = "LRFn68OMzhBG"; 
+
+    // Generate a unique subject filename using timestamp and a random string
+    const subject_id = jsPsych.randomization.randomID(10);
+    const filename = `sub-${subject_id}_data.csv`;
+
+    const save_data_trial = {
+        type: jsPsychPipe,
+        action: "save",
+        experiment_id: datapipe_experiment_id,
+        filename: filename,
+        data_string: () => jsPsych.data.get().csv()
+    };
+    
+    /** 9. PROLIFIC COMPLETION TERMINAL **/
     const prolific_completion = {
         type: jsPsychHtmlButtonResponse,
         choices: ['Exit Experiment'],
@@ -456,7 +473,7 @@
         }
     };
 
-    // Execution sequence: Gatekeeper -> Consent -> Demographics -> Instructions Loop -> Preload -> Main Task -> Completion
+    // Execution sequence: Gatekeeper -> Consent -> Demographics -> Instructions Loop -> Preload -> Main Task -> DataPipe Save -> Completion
     jsPsych.run([
         gatekeeper_loop, 
         consent_trial, 
@@ -464,6 +481,7 @@
         instructions_practice_loop, 
         preload, 
         main_procedure, 
+        save_data_trial, 
         prolific_completion
     ]);
 </script>
