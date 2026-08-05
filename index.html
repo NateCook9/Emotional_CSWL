@@ -248,7 +248,10 @@
         }
     };
 
-    /** 5. INSTRUCTIONS BLOCK WITH SAFARI AUDIO UNLOCK **/
+
+    /** 5. INSTRUCTIONS & AUDIO PRACTICE LOOP **/
+    let return_to_instructions = false;
+
     const instructions = {
         type: jsPsychHtmlButtonResponse,
         stimulus: function() {
@@ -266,8 +269,11 @@
                     <p>Please try to be as accurate and as fast as possible.</p>
                 </div>`;
         },
-        choices: ['See example & Check audio'],
+        choices: ['Continue to Audio Check'],
         on_finish: function() {
+            // Reset loop flag when advancing forward
+            return_to_instructions = false;
+
             // Unlock & resume Web Audio API context for Safari
             var context = jsPsych.pluginAPI.audioContext();
             if (context !== null && context.state === 'suspended') {
@@ -276,13 +282,12 @@
         }
     };
 
-    /** 5b. AUDIO TEST TRIAL **/
     const audio_test_trial = {
         type: jsPsychHtmlButtonResponse,
         stimulus: function() {
             return `
                 <div style="max-width: 700px; margin: auto; text-align: center;">
-                    <h2>Practice & Audio Check</h2>
+                    <h2>Audio & Practice Check</h2>
                     <p style="text-align: left; font-size: 16px; line-height: 1.5;">
                         This resembles a typical trial of this experiment. You will hear an audio clip and match it to one of the images. 
                         In this case, the Mandarin Chinese word means <strong>'carrot'</strong>, so you would press <strong>'F'</strong> on your keyboard to select the image of the carrot.
@@ -303,13 +308,22 @@
                 </div>
             `;
         },
-        choices: ['I can hear the audio clearly - Begin Experiment'],
-        on_start: function() {
-            // Explicitly ensure AudioContext is active
-            var context = jsPsych.pluginAPI.audioContext();
-            if (context !== null && context.state === 'suspended') {
-                context.resume();
+        choices: ['Return to Instructions', 'I can hear the audio clearly - Begin Experiment'],
+        on_finish: function(data) {
+            // If participant clicks choice index 0 ("Return to Instructions"), set flag to repeat loop
+            if (data.response === 0) {
+                return_to_instructions = true;
+            } else {
+                return_to_instructions = false;
             }
+        }
+    };
+
+    // Loop container that holds Instructions + Audio Check
+    const instructions_practice_loop = {
+        timeline: [instructions, audio_test_trial],
+        loop_function: function() {
+            return return_to_instructions;
         }
     };
     
