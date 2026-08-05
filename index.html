@@ -112,16 +112,21 @@
     // RESTORED: Generates the variables array for main_procedure
     const trialVariables = generateTrialVariables();
 
-    /** 2. PRELOAD MANIFEST (UPDATED WITH EXPLICIT WEBAUDIO FLAG) **/
-    const all_images = [];
+    /** 2. PRELOAD MANIFEST **/
+    const all_images = [
+        'assets/example/example_carrot.png',
+        'assets/example/example_tunnel.png'
+    ];
     activeEmotions.forEach(e => { for(let i=1; i<=12; i++) all_images.push(`assets/primes/${e}/${e}_${i}.jpg`); });
     allItems.forEach(i => all_images.push(`assets/stims/${i.cat}/${i.cat}_${i.name}.png`));
     
+    const all_audio = ['assets/example/example_carrot.mp3'];
+    allItems.forEach(i => all_audio.push(`assets/audio/${i.name}.mp3`));
+
     const preload = {
         type: jsPsychPreload,
         images: all_images,
-        audio: allItems.map(i => `assets/audio/${i.name}.mp3`),
-        use_webaudio: true, // Forces decoding into the now-active Web Audio context
+        audio: all_audio,
         message: "Loading study assets... Please wait.",
         continue_after_error: true
     };
@@ -271,6 +276,43 @@
         }
     };
 
+    /** 5b. AUDIO TEST TRIAL **/
+    const audio_test_trial = {
+        type: jsPsychHtmlButtonResponse,
+        stimulus: function() {
+            return `
+                <div style="max-width: 700px; margin: auto; text-align: center;">
+                    <h2>Audio & Practice Check</h2>
+                    <p style="text-align: left; font-size: 16px; line-height: 1.5;">
+                        This resembles a typical trial of this experiment. You will hear an audio clip and match it to one of the images. 
+                        In this case, the Mandarin Chinese word means <strong>'carrot'</strong>, so you would press <strong>'F'</strong> on your keyboard to select the image of the carrot.
+                    </p>
+                    <p style="text-align: left; font-size: 15px; color: #d9534f; font-weight: bold;">
+                        Please click the button below to test your audio. Ensure your sound is turned on and clear before proceeding!
+                    </p>
+                    
+                    <div class="stim-container">
+                        <img src="assets/example/example_carrot.png" class="stim-image" alt="Carrot">
+                        <img src="assets/example/example_tunnel.png" class="stim-image" alt="Tunnel">
+                    </div>
+                    
+                    <audio id="practice-audio-elem" src="assets/example/example_carrot.mp3" preload="auto"></audio>
+                    <button type="button" class="custom-submit-btn" style="margin-bottom: 20px; background-color: #007bff;" onclick="document.getElementById('practice-audio-elem').play()">
+                        🔊 Test Audio
+                    </button>
+                </div>
+            `;
+        },
+        choices: ['I can hear the audio clearly - Continue'],
+        on_start: function() {
+            // Explicitly ensure AudioContext is active
+            var context = jsPsych.pluginAPI.audioContext();
+            if (context !== null && context.state === 'suspended') {
+                context.resume();
+            }
+        }
+    };
+    
     /** 6. EXPERIMENTAL PROCEDURE BLOCK **/
     const fixation = {
         type: jsPsychHtmlKeyboardResponse,
@@ -337,7 +379,15 @@
         }
     };
 
-    // Execution sequence: Gatekeeper -> Demographics -> Instructions (Click unlocks Audio) -> Preload -> Experiment -> Completion
-    jsPsych.run([gatekeeper_loop, demographics_trial, instructions, preload, main_procedure, prolific_completion]);
+    // Sequence: Gatekeeper -> Demographics -> Instructions -> Audio Test -> Preload -> Main Experiment -> Completion
+    jsPsych.run([
+        gatekeeper_loop, 
+        demographics_trial, 
+        instructions, 
+        audio_test_trial, 
+        preload, 
+        main_procedure, 
+        prolific_completion
+    ]);
 </script>
 </html>
