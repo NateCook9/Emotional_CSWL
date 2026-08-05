@@ -350,6 +350,16 @@
                 return_to_instructions = true;
             } else {
                 return_to_instructions = false;
+                
+                // CRITICAL FOR SAFARI: Unlock & resume Web Audio API right as the user clicks 'Continue'
+                try {
+                    var ctx = jsPsych.pluginAPI.audioContext();
+                    if (ctx !== null && ctx.state === 'suspended') {
+                        ctx.resume();
+                    }
+                } catch(e) {
+                    console.log("AudioContext resume attempted:", e);
+                }
             }
         }
     };
@@ -403,6 +413,7 @@
         type: jsPsychAudioKeyboardResponse,
         stimulus: jsPsych.timelineVariable('audio_path'),
         choices: ['f', 'j'],
+        response_allowed_while_playing: true,
         prompt: function() {
             return `<div class="stim-container">
                         <img src="${jsPsych.timelineVariable('left_img')}" class="stim-image">
