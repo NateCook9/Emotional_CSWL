@@ -57,7 +57,7 @@
         numBlocks: 4        
     };
 
-    // Updated Category Array matching exact repository folders
+    // Category Array matching repository folder structure
     const allItems = [
         { name: 'drums', cat: 'music' }, { name: 'guitar', cat: 'music' },
         { name: 'flute', cat: 'music' }, { name: 'piano', cat: 'music' },
@@ -109,6 +109,10 @@
         });
     }
 
+    // RESTORED: Generates the variables array for main_procedure
+    const trialVariables = generateTrialVariables();
+
+    /** 2. PRELOAD MANIFEST **/
     const all_images = [];
     activeEmotions.forEach(e => { for(let i=1; i<=12; i++) all_images.push(`assets/primes/${e}/${e}_${i}.jpg`); });
     allItems.forEach(i => all_images.push(`assets/stims/${i.cat}/${i.cat}_${i.name}.png`));
@@ -238,7 +242,7 @@
         }
     };
 
-/** 5. INSTRUCTIONS BLOCK WITH EXPLICIT SAFARI AUDIO UNLOCK **/
+    /** 5. INSTRUCTIONS BLOCK WITH WEB AUDIO UNLOCK **/
     const instructions = {
         type: jsPsychHtmlButtonResponse,
         stimulus: function() {
@@ -258,12 +262,9 @@
         },
         choices: ['Begin Task'],
         on_finish: function() {
-            // Unlock Web Audio API context for Safari
             var context = jsPsych.pluginAPI.audioContext();
-            if (context !== null) {
-                if (context.state === 'suspended') {
-                    context.resume();
-                }
+            if (context !== null && context.state === 'suspended') {
+                context.resume();
             }
         }
     };
@@ -291,7 +292,6 @@
         type: jsPsychAudioKeyboardResponse,
         stimulus: jsPsych.timelineVariable('audio_path'),
         choices: ['f', 'j'],
-        // html5: true REMOVED -> Web Audio API buffers play cleanly once context is resumed above
         prompt: function() {
             return `<div class="stim-container">
                         <img src="${jsPsych.timelineVariable('left_img')}" class="stim-image">
