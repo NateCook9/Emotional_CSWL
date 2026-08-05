@@ -393,12 +393,11 @@
         }
     };
 
-    // Sequence: Gatekeeper -> Demographics -> Instructions -> Audio Test -> Preload -> Main Experiment -> Completion
+      // Sequence: Gatekeeper -> Demographics -> Instructions & Practice Loop -> Preload -> Main Experiment -> Completion
     jsPsych.run([
         gatekeeper_loop, 
         demographics_trial, 
-        instructions, 
-        audio_test_trial, 
+        instructions_practice_loop, 
         preload, 
         main_procedure, 
         prolific_completion
