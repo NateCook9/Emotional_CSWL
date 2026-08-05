@@ -17,31 +17,37 @@
         body { background-color: #f4f7f6; font-family: 'Helvetica Neue', Arial, sans-serif; }
         .jspsych-content { max-width: 800px; }
         .prime-img { max-height: 60vh; width: auto; border: 5px solid #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .stim-container { display: flex; justify-content: space-around; align-items: center; width: 100%; margin: 30px 0; }
+        .stim-container { display: flex; justify-content: space-around; align-items: flex-start; width: 100%; margin: 30px 0; }
+        .stim-wrapper { display: flex; flex-direction: column; align-items: center; width: 280px; }
         .stim-image { width: 280px; height: auto; border: 3px solid #fff; border-radius: 10px; }
+        .key-label { margin-top: 10px; font-size: 15px; font-weight: 500; color: #333; background: #ffffff; padding: 6px 12px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .fixation { font-size: 72px; font-weight: 300; color: #555; }
         
-        /* Survey Form Styling */
-        .form-question { margin-bottom: 20px; text-align: left; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        /* Form & Consent Styling */
+        .form-question { margin-bottom: 20px; text-align: left; background: #fff; padding: 18px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .form-question label { font-weight: bold; display: block; margin-bottom: 8px; }
         .form-question input[type="number"], .form-question select { padding: 8px; width: 100%; max-width: 300px; border: 1px solid #ccc; border-radius: 4px; }
-        .checkbox-group { display: flex; flex-direction: column; gap: 5px; }
+        .checkbox-group { display: flex; flex-direction: column; gap: 8px; }
         .checkbox-group label { font-weight: normal; display: inline-block; margin-left: 5px; }
         
-        .demographics-container { 
+        .consent-container, .demographics-container { 
             max-width: 650px; 
             margin: auto; 
             padding-bottom: 15vh; 
             text-align: center;
         }
 
+        .consent-body { text-align: left; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .consent-body ul { line-height: 1.6; margin-top: 10px; }
+        .consent-body li { margin-bottom: 10px; }
+
         .custom-submit-btn {
             background-color: #333;
             color: #fff;
             border: 1px solid transparent;
             border-radius: 4px;
-            padding: 0.5em 1em;
-            font-size: 14px;
+            padding: 0.6em 1.2em;
+            font-size: 15px;
             font-family: 'Open Sans', 'Helvetica Neue', Arial, sans-serif;
             cursor: pointer;
             margin-top: 20px;
@@ -109,29 +115,9 @@
         });
     }
 
-    // RESTORED: Generates the variables array for main_procedure
     const trialVariables = generateTrialVariables();
 
-    /** 2. PRELOAD MANIFEST **/
-    const all_images = [
-        'assets/example/example_carrot.png',
-        'assets/example/example_tunnel.png'
-    ];
-    activeEmotions.forEach(e => { for(let i=1; i<=12; i++) all_images.push(`assets/primes/${e}/${e}_${i}.jpg`); });
-    allItems.forEach(i => all_images.push(`assets/stims/${i.cat}/${i.cat}_${i.name}.png`));
-    
-    const all_audio = ['assets/example/example_carrot.mp3'];
-    allItems.forEach(i => all_audio.push(`assets/audio/${i.name}.mp3`));
-
-    const preload = {
-        type: jsPsychPreload,
-        images: all_images,
-        audio: all_audio,
-        message: "Loading study assets... Please wait.",
-        continue_after_error: true
-    };
-
-    /** 3. SECURITY GATEKEEPER BLOCK **/
+    /** 2. SECURITY GATEKEEPER BLOCK **/
     let passkey_correct = false;
 
     const passkey_trial = {
@@ -159,6 +145,47 @@
         timeline: [passkey_trial],
         loop_function: function() {
             return !passkey_correct;
+        }
+    };
+
+    /** 3. INFORMED CONSENT BLOCK **/
+    const consent_trial = {
+        type: jsPsychSurveyHtmlForm,
+        button_label: 'hidden',
+        on_start: function() {
+            const style = document.createElement('style');
+            style.id = 'hide-native-btn-consent';
+            style.innerHTML = '#jspsych-survey-html-form-next { display: none !important; }';
+            document.head.appendChild(style);
+        },
+        html: `
+            <div class="consent-container">
+                <h2>Informed Consent & Eligibility</h2>
+                <div class="consent-body">
+                    <p>Please read the following information carefully before deciding whether to participate in this research study:</p>
+                    <ul>
+                        <li><strong>Eligibility Requirement:</strong> Participants must complete this experiment on a computer (e.g., not a tablet or smartphone) and must have <strong>zero prior familiarity or knowledge of Mandarin Chinese</strong>.</li>
+                        <li><strong>Task Description:</strong> You will listen to short spoken Mandarin audio words while viewing images on screen and matching sound-meaning pairs using keyboard responses ('F' and 'J').</li>
+                        <li><strong>Duration:</strong> The study takes approximately <strong>10 minutes</strong> to complete.</li>
+                        <li><strong>Risks & Confidentiality:</strong> There are no anticipated physical or psychological risks beyond typical computer use. Data is transferred via DataPipe and is stored remoted on Open Science Framework. Though we cannot guarantee confidentiality, all data collected is anonymized, and stored securely.</li>
+                        <li><strong>Benefits:</strong> There are no direct personal benefits from participating in this study other than the monetary compensation provided via Prolific upon completion.</li>
+                    </ul>
+                </div>
+
+                <div class="form-question">
+                    <div class="checkbox-group">
+                        <label style="font-weight: bold; cursor: pointer;">
+                            <input type="checkbox" id="consent-check" name="consent_agreed" value="yes" required>
+                            I confirm that I have read and understood the information above, I meet the eligibility criteria (no prior knowledge of Mandarin Chinese), and I consent to participate in this study.
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="custom-submit-btn">I Agree & Continue</button>
+            </div>`,
+        on_finish: function() {
+            const styleRule = document.getElementById('hide-native-btn-consent');
+            if (styleRule) { styleRule.remove(); }
         }
     };
 
@@ -248,7 +275,6 @@
         }
     };
 
-
     /** 5. INSTRUCTIONS & AUDIO PRACTICE LOOP **/
     let return_to_instructions = false;
 
@@ -262,19 +288,16 @@
                     <ul>
                         <li>At the beginning of each trial, you will see a <strong>fixation cross (+)</strong>.</li>
                         <li>Next, a photo will flash briefly. This photo is not needed for the task and may be disregarded.</li>
-                        <li>Then, you will hear a <strong>Mandarin word</strong> and see two photos. Throughout the experiment, your task is to match the Mandarin word you hear with one of the objects in the photos.</li>
-                        <li>Press <strong>'F'</strong> if the word matches the <strong>left</strong> photo.</li>
-                        <li>Press <strong>'J'</strong> if the word matches the <strong>right</strong> photo.</li>
+                        <li>Then, you will hear a <strong>Mandarin word</strong> and see two photos. Throughout the experiment, your task is to match the Mandarin word you hear with one of the images.</li>
+                        <li>Press <strong>'F'</strong> if the word matches the <strong>left</strong> image.</li>
+                        <li>Press <strong>'J'</strong> if the word matches the <strong>right</strong> image.</li>
                     </ul>
                     <p>Please try to be as accurate and as fast as possible.</p>
                 </div>`;
         },
         choices: ['Continue to Audio Check'],
         on_finish: function() {
-            // Reset loop flag when advancing forward
             return_to_instructions = false;
-
-            // Unlock & resume Web Audio API context for Safari
             var context = jsPsych.pluginAPI.audioContext();
             if (context !== null && context.state === 'suspended') {
                 context.resume();
@@ -286,7 +309,7 @@
         type: jsPsychHtmlButtonResponse,
         stimulus: function() {
             return `
-                <div style="max-width: 700px; margin: auto; text-align: center;">
+                <div style="max-width: 750px; margin: auto; text-align: center;">
                     <h2>Audio & Practice Check</h2>
                     <p style="text-align: left; font-size: 16px; line-height: 1.5;">
                         This resembles a typical trial of this experiment. You will hear an audio clip and match it to one of the images. 
@@ -297,8 +320,14 @@
                     </p>
                     
                     <div class="stim-container">
-                        <img src="assets/example/example_carrot.png" class="stim-image" alt="Carrot">
-                        <img src="assets/example/example_tunnel.png" class="stim-image" alt="Tunnel">
+                        <div class="stim-wrapper">
+                            <img src="assets/example/example_carrot.png" class="stim-image" alt="Carrot">
+                            <div class="key-label">Press <strong>'F'</strong> if the word matches the <strong>left</strong> image.</div>
+                        </div>
+                        <div class="stim-wrapper">
+                            <img src="assets/example/example_tunnel.png" class="stim-image" alt="Tunnel">
+                            <div class="key-label">Press <strong>'J'</strong> if the word matches the <strong>right</strong> image.</div>
+                        </div>
                     </div>
                     
                     <audio id="practice-audio-elem" src="assets/example/example_carrot.mp3" preload="auto"></audio>
@@ -308,9 +337,8 @@
                 </div>
             `;
         },
-        choices: ['Return to Instructions', 'I can hear the audio clearly - Begin Experiment'],
+        choices: ['Return to Instructions', 'I can hear the audio clearly - Continue'],
         on_finish: function(data) {
-            // If participant clicks choice index 0 ("Return to Instructions"), set flag to repeat loop
             if (data.response === 0) {
                 return_to_instructions = true;
             } else {
@@ -319,15 +347,33 @@
         }
     };
 
-    // Loop container that holds Instructions + Audio Check
     const instructions_practice_loop = {
         timeline: [instructions, audio_test_trial],
         loop_function: function() {
             return return_to_instructions;
         }
     };
+
+    /** 6. PRELOAD MANIFEST **/
+    const all_images = [
+        'assets/example/example_carrot.png',
+        'assets/example/example_tunnel.png'
+    ];
+    activeEmotions.forEach(e => { for(let i=1; i<=12; i++) all_images.push(`assets/primes/${e}/${e}_${i}.jpg`); });
+    allItems.forEach(i => all_images.push(`assets/stims/${i.cat}/${i.cat}_${i.name}.png`));
     
-    /** 6. EXPERIMENTAL PROCEDURE BLOCK **/
+    const all_audio = ['assets/example/example_carrot.mp3'];
+    allItems.forEach(i => all_audio.push(`assets/audio/${i.name}.mp3`));
+
+    const preload = {
+        type: jsPsychPreload,
+        images: all_images,
+        audio: all_audio,
+        message: "Loading study assets... Please wait.",
+        continue_after_error: true
+    };
+
+    /** 7. EXPERIMENTAL PROCEDURE BLOCK **/
     const fixation = {
         type: jsPsychHtmlKeyboardResponse,
         stimulus: '<div class="fixation">+</div>',
@@ -377,7 +423,7 @@
         repetitions: RUNTIME_CONFIG.numBlocks
     };
 
-    /** 7. PROLIFIC COMPLETION TERMINAL **/
+    /** 8. PROLIFIC COMPLETION TERMINAL **/
     const prolific_completion = {
         type: jsPsychHtmlButtonResponse,
         choices: ['Exit Experiment'],
@@ -393,9 +439,10 @@
         }
     };
 
-      // Sequence: Gatekeeper -> Demographics -> Instructions & Practice Loop -> Preload -> Main Experiment -> Completion
+    // Execution sequence: Gatekeeper -> Consent -> Demographics -> Instructions Loop -> Preload -> Main Task -> Completion
     jsPsych.run([
         gatekeeper_loop, 
+        consent_trial, 
         demographics_trial, 
         instructions_practice_loop, 
         preload, 
